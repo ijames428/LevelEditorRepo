@@ -1,0 +1,16 @@
+C:\Users\Ian\Documents\GitHub\LevelEditor\LevelEditor\bin\Debug\LevelEditor.exe.config
+C:\Users\Ian\Documents\GitHub\LevelEditor\LevelEditor\bin\Debug\LevelEditor.exe
+C:\Users\Ian\Documents\GitHub\LevelEditor\LevelEditor\bin\Debug\LevelEditor.pdb
+C:\Users\Ian\Documents\GitHub\LevelEditor\LevelEditor\obj\Debug\LevelEditor.csprojResolveAssemblyReference.cache
+C:\Users\Ian\Documents\GitHub\LevelEditor\LevelEditor\obj\Debug\MainWindow.baml
+C:\Users\Ian\Documents\GitHub\LevelEditor\LevelEditor\obj\Debug\MainWindow.g.cs
+C:\Users\Ian\Documents\GitHub\LevelEditor\LevelEditor\obj\Debug\App.g.cs
+C:\Users\Ian\Documents\GitHub\LevelEditor\LevelEditor\obj\Debug\LevelEditor_MarkupCompile.cache
+C:\Users\Ian\Documents\GitHub\LevelEditor\LevelEditor\obj\Debug\LevelEditor.g.resources
+C:\Users\Ian\Documents\GitHub\LevelEditor\LevelEditor\obj\Debug\LevelEditor.Properties.Resources.resources
+C:\Users\Ian\Documents\GitHub\LevelEditor\LevelEditor\obj\Debug\LevelEditor.csproj.GenerateResource.Cache
+C:\Users\Ian\Documents\GitHub\LevelEditor\LevelEditor\obj\Debug\LevelEditor.exe
+C:\Users\Ian\Documents\GitHub\LevelEditor\LevelEditor\obj\Debug\LevelEditor.pdb
+C:\Users\Ian\Documents\GitHub\LevelEditor\LevelEditor\obj\Debug\LevelEditor_MarkupCompile.lref
+C:\Users\Ian\Documents\GitHub\LevelEditor\LevelEditor\bin\Debug\Newtonsoft.Json.dll
+C:\Users\Ian\Documents\GitHub\LevelEditor\LevelEditor\bin\Debug\Newtonsoft.Json.xml
