@@ -8,41 +8,49 @@
         Title="MainWindow">
 	<Grid>
 		<Canvas Name="MyButtons">
-			<Label Background="White" FontWeight="Bold" HorizontalContentAlignment="Center" Canvas.Right="1" Width="200" Canvas.Top="20">Objects
-			</Label>
-			<ListBox Name="ListOfObjects" Canvas.Right="1" Canvas.Top="46" Height="300" Width="200">
+			<Button Canvas.Right="170" Canvas.Top="5" Click="Save">Save</Button>
+			<Button Canvas.Right="130" Canvas.Top="5" Click="Open">Open</Button>
+			<Button Name="ImportBestiaryButton" Canvas.Right="5" Canvas.Top="5" Click="ImportBestiaryButton_Click">Import Bestiary</Button>
+
+			<Label Background="White" FontWeight="Bold" HorizontalContentAlignment="Center" Canvas.Right="1" Width="200" Canvas.Top="26">Types of Objects</Label>
+			<ListBox Name="ListOfObjectTypes" Canvas.Right="1" Canvas.Top="50" Height="172" Width="200">
+				<ListBoxItem Name="Rectangle">Rectangle</ListBoxItem>
+				<ListBoxItem Name="Triangle">Triangle</ListBoxItem>
+				<ListBoxItem Name="Door">Door</ListBoxItem>
 			</ListBox>
-			<ComboBox Name="ShapeSelection" Canvas.Right="1">
-				<ComboBoxItem>1 - Rectangle</ComboBoxItem>
-				<ComboBoxItem IsSelected="True">2 - Triangle</ComboBoxItem>
+
+			<Label Background="White" FontWeight="Bold" HorizontalContentAlignment="Center" Canvas.Right="1" Width="200" Canvas.Top="222">Objects</Label>
+			<ListBox Name="ListOfObjects" Canvas.Right="1" Canvas.Top="246" Height="300" Width="200"></ListBox>
+			<!--ComboBox Name="ShapeSelection" Canvas.Right="1">
+				<ComboBoxItem IsSelected="True">1 - Rectangle</ComboBoxItem>
+				<ComboBoxItem>2 - Triangle</ComboBoxItem>
 				<ComboBoxItem>3 - Door</ComboBoxItem>
-			</ComboBox>
-			<Button Canvas.Right="170" Click="Save">Save</Button>
-			<Button Canvas.Right="130" Click="Open">Open</Button>
-			<Label Name="xLabel" Canvas.Right="180" Canvas.Top="350" Visibility="Hidden">X:</Label>
-			<TextBox Name="xTextBox" Canvas.Right="105" Canvas.Top="354" Width="75" Visibility="Hidden"></TextBox>
-			<Label Name="yLabel" Canvas.Right="180" Canvas.Top="368" Visibility="Hidden">Y:</Label>
-			<TextBox Name="yTextBox" Canvas.Right="105" Canvas.Top="372" Width="75" Visibility="Hidden"></TextBox>
-			<Label Name="wLabel" Canvas.Right="180" Canvas.Top="386" Visibility="Hidden">W:</Label>
-			<TextBox Name="wTextBox" Canvas.Right="105" Canvas.Top="390" Width="75" Visibility="Hidden"></TextBox>
-			<Label Name="hLabel"  Canvas.Right="180" Canvas.Top="404" Visibility="Hidden">H:</Label>
-			<TextBox Name="hTextBox" Canvas.Right="105" Canvas.Top="408" Width="75" Visibility="Hidden"></TextBox>
+			</-->
+			
+			<Label Name="xLabel" Canvas.Right="180" Canvas.Top="550" Visibility="Hidden">X:</Label>
+			<TextBox Name="xTextBox" Canvas.Right="105" Canvas.Top="554" Width="75" Visibility="Hidden"></TextBox>
+			<Label Name="yLabel" Canvas.Right="180" Canvas.Top="568" Visibility="Hidden">Y:</Label>
+			<TextBox Name="yTextBox" Canvas.Right="105" Canvas.Top="572" Width="75" Visibility="Hidden"></TextBox>
+			<Label Name="wLabel" Canvas.Right="180" Canvas.Top="586" Visibility="Hidden">W:</Label>
+			<TextBox Name="wTextBox" Canvas.Right="105" Canvas.Top="590" Width="75" Visibility="Hidden"></TextBox>
+			<Label Name="hLabel"  Canvas.Right="180" Canvas.Top="604" Visibility="Hidden">H:</Label>
+			<TextBox Name="hTextBox" Canvas.Right="105" Canvas.Top="608" Width="75" Visibility="Hidden"></TextBox>
 
-			<CheckBox Name="TriangleCheckBox" Canvas.Right="82" Canvas.Top="427" Visibility="Hidden">Right Angle Above</CheckBox>
-			<Label Name="p1xLabel"  Canvas.Right="173" Canvas.Top="350" Visibility="Hidden">P1X:</Label>
-			<TextBox Name="p1xTextBox" Canvas.Right="98" Canvas.Top="354" Width="75" Visibility="Hidden"></TextBox>
-			<Label Name="p1yLabel"  Canvas.Right="174" Canvas.Top="368" Visibility="Hidden">P1Y:</Label>
-			<TextBox Name="p1yTextBox" Canvas.Right="98" Canvas.Top="372" Width="75" Visibility="Hidden"></TextBox>
-			<Label Name="p2xLabel"  Canvas.Right="173" Canvas.Top="386" Visibility="Hidden">P2X:</Label>
-			<TextBox Name="p2xTextBox" Canvas.Right="98" Canvas.Top="390" Width="75" Visibility="Hidden"></TextBox>
-			<Label Name="p2yLabel"  Canvas.Right="174" Canvas.Top="404" Visibility="Hidden">P2Y:</Label>
-			<TextBox Name="p2yTextBox" Canvas.Right="98" Canvas.Top="408" Width="75" Visibility="Hidden"></TextBox>
+			<CheckBox Name="TriangleCheckBox" Canvas.Right="82" Canvas.Top="627" Visibility="Hidden">Right Angle Above</CheckBox>
+			<Label Name="p1xLabel"  Canvas.Right="173" Canvas.Top="550" Visibility="Hidden">P1X:</Label>
+			<TextBox Name="p1xTextBox" Canvas.Right="98" Canvas.Top="554" Width="75" Visibility="Hidden"></TextBox>
+			<Label Name="p1yLabel"  Canvas.Right="174" Canvas.Top="568" Visibility="Hidden">P1Y:</Label>
+			<TextBox Name="p1yTextBox" Canvas.Right="98" Canvas.Top="572" Width="75" Visibility="Hidden"></TextBox>
+			<Label Name="p2xLabel"  Canvas.Right="173" Canvas.Top="586" Visibility="Hidden">P2X:</Label>
+			<TextBox Name="p2xTextBox" Canvas.Right="98" Canvas.Top="590" Width="75" Visibility="Hidden"></TextBox>
+			<Label Name="p2yLabel"  Canvas.Right="174" Canvas.Top="604" Visibility="Hidden">P2Y:</Label>
+			<TextBox Name="p2yTextBox" Canvas.Right="98" Canvas.Top="608" Width="75" Visibility="Hidden"></TextBox>
 
-			<Label Name="doorActivatorLabel"  Canvas.Right="148" Canvas.Top="422" Visibility="Hidden">Activator</Label>
-			<TextBox Name="doorActivatorTextBox" Canvas.Right="72" Canvas.Top="426" Width="75" Visibility="Hidden"></TextBox>
+			<Label Name="doorActivatorLabel"  Canvas.Right="148" Canvas.Top="622" Visibility="Hidden">Activator</Label>
+			<TextBox Name="doorActivatorTextBox" Canvas.Right="72" Canvas.Top="626" Width="75" Visibility="Hidden"></TextBox>
 
-			<Button Name="ApplyButton" Canvas.Right="5" Canvas.Top="354" Width="60" Click="Apply">Apply</Button>
-			<Button Name="DeleteButton" Canvas.Right="5" Canvas.Top="406" Width="60" Click="Delete">Delete</Button>
+			<Button Name="ApplyButton" Canvas.Right="5" Canvas.Top="554" Width="60" Click="Apply">Apply</Button>
+			<Button Name="DeleteButton" Canvas.Right="5" Canvas.Top="606" Width="60" Click="Delete">Delete</Button>
 		</Canvas>
 		<Canvas Name="MyCanvas"
 			xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"

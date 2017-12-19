@@ -27,9 +27,10 @@ namespace LevelEditor
 		SolidColorBrush SelectedColor = Brushes.Green;
 		SolidColorBrush DormantColor = Brushes.LightBlue;
 		
-		const int SHAPE_SELECTION_RECTANGLE = 0;
-		const int SHAPE_SELECTION_TRIANGLE = 1;
-		const int SHAPE_SELECTION_DOOR = 2;
+		const int OBJECT_SELECTION_RECTANGLE = 0;
+		const int OBJECT_SELECTION_TRIANGLE = 1;
+		const int OBJECT_SELECTION_DOOR = 2;
+		const int OBJECT_SELECTION_UNIT_STARTING_INDEX = 3;
 
 		Point mouse_pressed_pos = new Point();
 
@@ -57,6 +58,15 @@ namespace LevelEditor
 		Rectangle playerRectangle = null;
 		bool playerRectSelected = false;
 
+		List<string> ImportedBestiariesFilePaths = new List<string>();
+		List<Bestiary> Bestiaries = new List<Bestiary>();
+
+		//Unit selected_unit = null;
+		Rectangle selected_unit_rectangle = null;
+		Dictionary<string, Rectangle> unit_rects = new Dictionary<string, Rectangle>();
+		List<SerializedUnit> sUnits = new List<SerializedUnit>();
+		string selected_unit_name = "";
+
 		public MainWindow()
 		{
 			InitializeComponent();
@@ -74,7 +84,7 @@ namespace LevelEditor
 
 			mouse_pressed_pos = e.GetPosition(MyCanvas);
 
-			if (ShapeSelection.SelectedIndex == SHAPE_SELECTION_RECTANGLE)
+			if (ListOfObjectTypes.SelectedIndex == OBJECT_SELECTION_RECTANGLE)
 			{
 				rect_getting_drawn = new Rectangle
 				{
@@ -85,7 +95,7 @@ namespace LevelEditor
 				Canvas.SetTop(rect_getting_drawn, mouse_pressed_pos.Y);
 				MyCanvas.Children.Add(rect_getting_drawn);
 			}
-			else if (ShapeSelection.SelectedIndex == SHAPE_SELECTION_TRIANGLE)
+			else if (ListOfObjectTypes.SelectedIndex == OBJECT_SELECTION_TRIANGLE)
 			{
 				//triangle_getting_made = new Polygon();
 				//triangle_getting_made.StrokeThickness = 0;
@@ -174,7 +184,7 @@ namespace LevelEditor
 			{
 				isDataDirty = true;
 
-				if (ShapeSelection.SelectedIndex == SHAPE_SELECTION_RECTANGLE)
+				if (ListOfObjectTypes.SelectedIndex == OBJECT_SELECTION_RECTANGLE)
 				{
 					int item_index = 0;
 					string name = "Rectangle " + ListOfObjects.Items.Count;
@@ -217,7 +227,7 @@ namespace LevelEditor
 			{
 				isDataDirty = true;
 
-				if (ShapeSelection.SelectedIndex == SHAPE_SELECTION_TRIANGLE)
+				if (ListOfObjectTypes.SelectedIndex == OBJECT_SELECTION_TRIANGLE)
 				{
 					int item_index = 0;
 					string name = "Triangle " + ListOfObjects.Items.Count;
@@ -256,10 +266,81 @@ namespace LevelEditor
 				}
 			}
 
-			if (ShapeSelection.SelectedIndex == SHAPE_SELECTION_DOOR)
+			if (ListOfObjectTypes.SelectedIndex == OBJECT_SELECTION_DOOR)
 			{
 				CreateDoor(e);
 			}
+
+			if (ListOfObjectTypes.SelectedIndex >= OBJECT_SELECTION_UNIT_STARTING_INDEX)
+			{
+				ListBoxItem item = (ListBoxItem)ListOfObjectTypes.SelectedItem;
+				string name = item.Content.ToString();
+
+				CreateUnit(e, name);
+			}
+		}
+
+		public void CreateUnit(MouseButtonEventArgs e, string bestiary_name_and_unit_type)
+		{
+			string bestiary_name = bestiary_name_and_unit_type.Substring(1, bestiary_name_and_unit_type.IndexOf("]") - 1);
+			string unit_type = bestiary_name_and_unit_type.Substring(bestiary_name_and_unit_type.IndexOf("]") + 1);
+
+			rect_getting_drawn = new Rectangle
+			{
+				Stroke = TransformingColor,
+				StrokeThickness = 1,
+				Width = 10.0f,
+				Height = 10.0f
+			};
+
+			int item_index = 0;
+			string name = unit_type + " " + ListOfObjects.Items.Count;
+
+			while (GetSerializedUnit(name) != null)
+			{
+				item_index++;
+				name = unit_type + " " + item_index;
+			}
+
+			ListBoxItem item = new ListBoxItem();
+			item.Content = name;
+			item.Selected += OnSelected;
+			item.Unselected += OnUnselected;
+			ListOfObjects.Items.Add(item);
+
+			unit_rects.Add(name, rect_getting_drawn);
+
+			//selected_unit = null;
+			//
+			//for (int i = 0; i < Bestiaries.Count; i++)
+			//{
+			//	if (Bestiaries[i].BestiaryName == bestiary_name)
+			//	{
+			//		selected_unit = Bestiaries[i].DictOfUnits[unit_type];
+			//		break;
+			//	}
+			//}
+
+			var pos = e.GetPosition(MyCanvas);
+
+			SerializedUnit sUnit = new SerializedUnit();
+			sUnit.UnitType = unit_type;
+			sUnit.BestiaryName = bestiary_name;
+			sUnit.InstanceOfUnitName = name;
+			sUnit.LevelLocationX = (float)pos.X;
+			sUnit.LevelLocationY = (float)pos.Y;
+			sUnit.width = (float)rect_getting_drawn.Width;
+			sUnit.height = (float)rect_getting_drawn.Height;
+
+			sUnits.Add(sUnit);
+
+			Select(name);
+			
+			Canvas.SetLeft(rect_getting_drawn, sUnit.LevelLocationX);
+			Canvas.SetTop(rect_getting_drawn, sUnit.LevelLocationY);
+			MyCanvas.Children.Add(rect_getting_drawn);
+
+			rect_getting_drawn = null;
 		}
 
 		public void CreateDoor(MouseButtonEventArgs e)
@@ -451,6 +532,30 @@ namespace LevelEditor
 				HideRectangleUiItems();
 				ShowDoorUiItems();
 			}
+			else
+			{
+				DeleteButton.IsEnabled = true;
+
+				selected_unit_name = name;
+
+				selected_unit_rectangle = unit_rects[name];
+				selected_unit_rectangle.Stroke = SelectedColor;
+
+				SerializedUnit unit = GetSerializedUnit(name);
+
+				xTextBox.Text = unit.LevelLocationX.ToString();
+				yTextBox.Text = unit.LevelLocationY.ToString();
+				wTextBox.Text = "N/A";
+				hTextBox.Text = "N/A";
+
+				wTextBox.IsEnabled = false;
+				hTextBox.IsEnabled = false;
+				TriangleCheckBox.IsEnabled = false;
+
+				HideTriangleUiItems();
+				HideDoorUiItems();
+				ShowRectangleUiItems();
+			}
 		}
 
 		private void Deselect()
@@ -475,16 +580,28 @@ namespace LevelEditor
 				selected_door.Stroke = DormantColor;
 				HideDoorUiItems();
 			}
+			else if (selected_unit_rectangle != null)
+			{
+				selected_unit_rectangle.Stroke = DormantColor;
+				HideRectangleUiItems();
+			}
 
 			DeleteButton.IsEnabled = false;
 
 			playerRectSelected = false;
+
 			selected_rect_name = "";
 			selected_rectangle = null;
+
 			selected_triangle_name = "";
 			selected_triangle = null;
+
 			selected_door_name = "";
 			selected_door = null;
+
+			//selected_unit = null;
+			selected_unit_name = "";
+			selected_unit_rectangle = null;
 
 			xTextBox.Text = "";
 			yTextBox.Text = "";
@@ -581,6 +698,20 @@ namespace LevelEditor
 
 				MyCanvas.Children.Add(selected_door);
 			}
+
+			SerializedUnit sUnit = GetSerializedUnit(selected_unit_name);
+			if (sUnit != null)
+			{
+				float.TryParse(xTextBox.Text, out sUnit.LevelLocationX);
+				float.TryParse(yTextBox.Text, out sUnit.LevelLocationY);
+
+				MyCanvas.Children.Remove(selected_unit_rectangle);
+
+				Canvas.SetLeft(selected_unit_rectangle, sUnit.LevelLocationX);
+				Canvas.SetTop(selected_unit_rectangle, sUnit.LevelLocationY);
+
+				MyCanvas.Children.Add(selected_unit_rectangle);
+			}
 		}
 
 		private void Delete(object sender, RoutedEventArgs e)
@@ -644,6 +775,26 @@ namespace LevelEditor
 					}
 				}
 			}
+
+			SerializedUnit sUnit = GetSerializedUnit(selected_unit_name);
+			if (sUnit != null)
+			{
+				isDataDirty = true;
+				unit_rects.Remove(selected_unit_name);
+				sUnits.Remove(sUnit);
+				MyCanvas.Children.Remove(selected_unit_rectangle);
+
+				for (int i = 0; i < ListOfObjects.Items.Count; i++)
+				{
+					ListBoxItem item = (ListBoxItem)ListOfObjects.Items[i];
+
+					if (item.Content.ToString() == selected_unit_name)
+					{
+						ListOfObjects.Items.Remove(ListOfObjects.Items[i]);
+						break;
+					}
+				}
+			}
 		}
 
 		private void Save(object sender, RoutedEventArgs e)
@@ -653,6 +804,8 @@ namespace LevelEditor
 			sObjects.rectangles = sRects;
 			sObjects.triangles = sTris;
 			sObjects.doors = sDoors;
+			sObjects.bestiaryFilePaths = ImportedBestiariesFilePaths;
+			sObjects.units = sUnits;
 
 			string jsonStr = JsonConvert.SerializeObject(sObjects);
 
@@ -706,10 +859,27 @@ namespace LevelEditor
 				sRects = sObjects.rectangles;
 				sTris = sObjects.triangles;
 				sDoors = sObjects.doors;
+				ImportedBestiariesFilePaths = sObjects.bestiaryFilePaths;
+				sUnits = sObjects.units;
 
 				rectangles.Clear();
 				triangles.Clear();
 				door_rects.Clear();
+				unit_rects.Clear();
+
+				ListOfObjectTypes.Items.Clear();
+
+				ListBoxItem rectangleItem = new ListBoxItem();
+				rectangleItem.Content = "Rectangle";
+				ListOfObjectTypes.Items.Add(rectangleItem);
+
+				ListBoxItem triangleItem = new ListBoxItem();
+				triangleItem.Content = "Triangle";
+				ListOfObjectTypes.Items.Add(triangleItem);
+
+				ListBoxItem doorItem = new ListBoxItem();
+				doorItem.Content = "Door";
+				ListOfObjectTypes.Items.Add(doorItem);
 
 				ListOfObjects.Items.Clear();
 				MyCanvas.Children.Clear();
@@ -725,7 +895,7 @@ namespace LevelEditor
 				Canvas.SetTop(rect, sPlayer.y);
 				MyCanvas.Children.Add(rect);
 
-				rectangles.Add(sPlayer.name, rect);
+				playerRectangle = rect;
 
 				ListBoxItem item = new ListBoxItem();
 				item.Content = sPlayer.name;
@@ -800,6 +970,30 @@ namespace LevelEditor
 					ListOfObjects.Items.Add(item);
 				}
 
+				for (int i = 0; i < sUnits.Count(); i++)
+				{
+					rect = new Rectangle
+					{
+						Stroke = DormantColor,
+						StrokeThickness = 1,
+						Height = sUnits[i].height,
+						Width = sUnits[i].width
+					};
+					Canvas.SetLeft(rect, sUnits[i].LevelLocationX);
+					Canvas.SetTop(rect, sUnits[i].LevelLocationY);
+					MyCanvas.Children.Add(rect);
+
+					unit_rects.Add(sUnits[i].InstanceOfUnitName, rect);
+
+					item = new ListBoxItem();
+					item.Content = sUnits[i].InstanceOfUnitName;
+					item.Selected += OnSelected;
+					item.Unselected += OnUnselected;
+					ListOfObjects.Items.Add(item);
+				}
+
+				ImportBestiaries();
+
 				isDataDirty = false;
 				Deselect();
 			}
@@ -838,6 +1032,19 @@ namespace LevelEditor
 				if (name == sDoors[i].name)
 				{
 					return sDoors[i];
+				}
+			}
+
+			return null;
+		}
+
+		private SerializedUnit GetSerializedUnit(string name)
+		{
+			for (int i = 0; i < sUnits.Count; i++)
+			{
+				if (name == sUnits[i].InstanceOfUnitName)
+				{
+					return sUnits[i];
 				}
 			}
 
@@ -951,6 +1158,87 @@ namespace LevelEditor
 			doorActivatorLabel.Visibility = Visibility.Hidden;
 			doorActivatorTextBox.Visibility = Visibility.Hidden;
 		}
+
+		private void ImportBestiaryButton_Click(object sender, RoutedEventArgs e)
+		{
+			OpenFileDialog openFileDialog = new OpenFileDialog();
+
+			openFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+			openFileDialog.FilterIndex = 2;
+			openFileDialog.RestoreDirectory = true;
+
+			if (openFileDialog.ShowDialog() == true)
+			{
+				ImportBestiary(openFileDialog.FileName);
+				//System.IO.StreamReader sr = new System.IO.StreamReader(openFileDialog.FileName);
+				//
+				//result = sr.ReadToEnd();
+				//
+				//sr.Close();
+			}
+
+			//if (!string.IsNullOrWhiteSpace(result))
+			//{
+			//	Bestiary newBestiary = JsonConvert.DeserializeObject<Bestiary>(result);
+			//
+			//	foreach (string key in newBestiary.DictOfUnits.Keys)
+			//	{
+			//		Unit unit = newBestiary.DictOfUnits[key];
+			//
+			//		ListBoxItem item = new ListBoxItem();
+			//		item.Content = "[" + newBestiary.BestiaryName + "]" + unit.UnitName;
+			//		ListOfObjectTypes.Items.Add(item);
+			//	}
+			//
+			//	Bestiaries.Add(newBestiary);
+			//
+			//	ImportedBestiariesFilePaths.Add(openFileDialog.FileName);
+			//	
+			//	isDataDirty = false;
+			//}
+		}
+
+		private void ImportBestiaries()
+		{
+			for (int i = 0; i < ImportedBestiariesFilePaths.Count; i++)
+			{
+				ImportBestiary(ImportedBestiariesFilePaths[i]);
+			}
+		}
+
+		private void ImportBestiary(string filepath)
+		{
+			string result = "";
+
+			System.IO.StreamReader sr = new System.IO.StreamReader(filepath);
+
+			result = sr.ReadToEnd();
+
+			sr.Close();
+
+			if (!string.IsNullOrWhiteSpace(result))
+			{
+				Bestiary newBestiary = JsonConvert.DeserializeObject<Bestiary>(result);
+
+				foreach (string key in newBestiary.DictOfUnits.Keys)
+				{
+					Unit unit = newBestiary.DictOfUnits[key];
+
+					ListBoxItem item = new ListBoxItem();
+					item.Content = "[" + newBestiary.BestiaryName + "]" + unit.UnitName;
+					ListOfObjectTypes.Items.Add(item);
+				}
+
+				Bestiaries.Add(newBestiary);
+
+				if (!ImportedBestiariesFilePaths.Contains(filepath))
+				{
+					ImportedBestiariesFilePaths.Add(filepath);
+				}
+
+				isDataDirty = false;
+			}
+		}
 	}
 
 	public class SerializedObject
@@ -1007,9 +1295,114 @@ namespace LevelEditor
 		public List<SerializedRectangle> rectangles;
 		public List<SerializedTriangle> triangles;
 		public List<SerializedDoor> doors;
+		public List<string> bestiaryFilePaths;
+		public List<SerializedUnit> units;
 
 		public SerializedObjects()
 		{
 		}
 	}
+
+	public class SerializedUnit
+	{
+		public string UnitType = "";
+		public string BestiaryName = "";
+		public string InstanceOfUnitName = "";
+		public float LevelLocationX = 0.0f;
+		public float LevelLocationY = 0.0f;
+		public float width = 0.0f;
+		public float height = 0.0f;
+
+		public SerializedUnit()
+		{
+		}
+	}
+
+	public class Bestiary
+	{
+		public string BestiaryName = "";
+		public Dictionary<string, Unit> DictOfUnits = new Dictionary<string, Unit>();
+		//public List<Unit> Units;
+
+		public Bestiary()
+		{
+		}
+	}
+
+	public class Unit
+	{
+		public string UnitName = "";
+		public int HitPoints = 0;
+		public float MovementSpeed = 0.0f;
+		//public List<StateAnimation> IdleAnimations = new List<StateAnimation>();
+		//public List<StateAnimation> WalkingAnimations = new List<StateAnimation>();
+	
+		public string InstanceOfUnitName = "";
+		public float LevelLocationX = 0.0f;
+		public float LevelLocationY = 0.0f;
+		public float width = 0.0f;
+		public float height = 0.0f;
+	
+		public Unit()
+		{
+		}
+	}
+	//
+	//public class StateAnimation
+	//{
+	//	public string State = "";
+	//	public string FilePath = "";
+	//	public int NumberOfFrames = 0;
+	//	public int SourceDimensionsX = 0;
+	//	public int SourceDimensionsY = 0;
+	//	public int FrameDimensionsX = 0;
+	//	public int FrameDimensionsY = 0;
+	//	public int FramesPerRow = 0;
+	//	public int FramesPerColumn = 0;
+	//	public List<List<HitOrHurtBox>> HurtBoxPerFrame = new List<List<HitOrHurtBox>>();
+	//	public List<List<HitOrHurtBox>> HitBoxPerFrame = new List<List<HitOrHurtBox>>();
+	//	//[JsonIgnore]
+	//	//public List<List<ListBoxItem>> HitOrHurtBoxListItems = new List<List<ListBoxItem>>();
+	//
+	//	public StateAnimation()
+	//	{
+	//	}
+	//}
+	//
+	//public class HitOrHurtBox
+	//{
+	//	public string Name = "";
+	//	public Rect Box = new Rect();
+	//	public Rect DrawRect = new Rect();
+	//	//[JsonIgnore]
+	//	//private Rectangle _drawRectangle;
+	//	//[JsonIgnore]
+	//	//public Rectangle DrawRectangle
+	//	//{
+	//	//	get
+	//	//	{
+	//	//		if (_drawRectangle == null)
+	//	//		{
+	//	//			_drawRectangle = new Rectangle();
+	//	//			_drawRectangle.Width = DrawRect.Width;
+	//	//			_drawRectangle.Height = DrawRect.Height;
+	//	//			_drawRectangle.Stroke = Name.Contains("Hit") ? Brushes.Red : Brushes.Green;
+	//	//			_drawRectangle.StrokeThickness = 1;
+	//	//		}
+	//	//
+	//	//		return _drawRectangle;
+	//	//	}
+	//	//	set
+	//	//	{
+	//	//		_drawRectangle = value;
+	//	//	}
+	//	//}
+	//	public int Damage = 0;
+	//	public float KnockBackX = 0.0f;
+	//	public float KnockBackY = 0.0f;
+	//
+	//	public HitOrHurtBox()
+	//	{
+	//	}
+	//}
 }
