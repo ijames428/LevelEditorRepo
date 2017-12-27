@@ -1170,32 +1170,7 @@ namespace LevelEditor
 			if (openFileDialog.ShowDialog() == true)
 			{
 				ImportBestiary(openFileDialog.FileName);
-				//System.IO.StreamReader sr = new System.IO.StreamReader(openFileDialog.FileName);
-				//
-				//result = sr.ReadToEnd();
-				//
-				//sr.Close();
 			}
-
-			//if (!string.IsNullOrWhiteSpace(result))
-			//{
-			//	Bestiary newBestiary = JsonConvert.DeserializeObject<Bestiary>(result);
-			//
-			//	foreach (string key in newBestiary.DictOfUnits.Keys)
-			//	{
-			//		Unit unit = newBestiary.DictOfUnits[key];
-			//
-			//		ListBoxItem item = new ListBoxItem();
-			//		item.Content = "[" + newBestiary.BestiaryName + "]" + unit.UnitName;
-			//		ListOfObjectTypes.Items.Add(item);
-			//	}
-			//
-			//	Bestiaries.Add(newBestiary);
-			//
-			//	ImportedBestiariesFilePaths.Add(openFileDialog.FileName);
-			//	
-			//	isDataDirty = false;
-			//}
 		}
 
 		private void ImportBestiaries()
@@ -1322,7 +1297,6 @@ namespace LevelEditor
 	{
 		public string BestiaryName = "";
 		public Dictionary<string, Unit> DictOfUnits = new Dictionary<string, Unit>();
-		//public List<Unit> Units;
 
 		public Bestiary()
 		{
@@ -1334,8 +1308,6 @@ namespace LevelEditor
 		public string UnitName = "";
 		public int HitPoints = 0;
 		public float MovementSpeed = 0.0f;
-		//public List<StateAnimation> IdleAnimations = new List<StateAnimation>();
-		//public List<StateAnimation> WalkingAnimations = new List<StateAnimation>();
 	
 		public string InstanceOfUnitName = "";
 		public float LevelLocationX = 0.0f;
@@ -1347,62 +1319,4 @@ namespace LevelEditor
 		{
 		}
 	}
-	//
-	//public class StateAnimation
-	//{
-	//	public string State = "";
-	//	public string FilePath = "";
-	//	public int NumberOfFrames = 0;
-	//	public int SourceDimensionsX = 0;
-	//	public int SourceDimensionsY = 0;
-	//	public int FrameDimensionsX = 0;
-	//	public int FrameDimensionsY = 0;
-	//	public int FramesPerRow = 0;
-	//	public int FramesPerColumn = 0;
-	//	public List<List<HitOrHurtBox>> HurtBoxPerFrame = new List<List<HitOrHurtBox>>();
-	//	public List<List<HitOrHurtBox>> HitBoxPerFrame = new List<List<HitOrHurtBox>>();
-	//	//[JsonIgnore]
-	//	//public List<List<ListBoxItem>> HitOrHurtBoxListItems = new List<List<ListBoxItem>>();
-	//
-	//	public StateAnimation()
-	//	{
-	//	}
-	//}
-	//
-	//public class HitOrHurtBox
-	//{
-	//	public string Name = "";
-	//	public Rect Box = new Rect();
-	//	public Rect DrawRect = new Rect();
-	//	//[JsonIgnore]
-	//	//private Rectangle _drawRectangle;
-	//	//[JsonIgnore]
-	//	//public Rectangle DrawRectangle
-	//	//{
-	//	//	get
-	//	//	{
-	//	//		if (_drawRectangle == null)
-	//	//		{
-	//	//			_drawRectangle = new Rectangle();
-	//	//			_drawRectangle.Width = DrawRect.Width;
-	//	//			_drawRectangle.Height = DrawRect.Height;
-	//	//			_drawRectangle.Stroke = Name.Contains("Hit") ? Brushes.Red : Brushes.Green;
-	//	//			_drawRectangle.StrokeThickness = 1;
-	//	//		}
-	//	//
-	//	//		return _drawRectangle;
-	//	//	}
-	//	//	set
-	//	//	{
-	//	//		_drawRectangle = value;
-	//	//	}
-	//	//}
-	//	public int Damage = 0;
-	//	public float KnockBackX = 0.0f;
-	//	public float KnockBackY = 0.0f;
-	//
-	//	public HitOrHurtBox()
-	//	{
-	//	}
-	//}
 }
