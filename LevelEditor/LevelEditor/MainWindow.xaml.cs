@@ -331,6 +331,7 @@ namespace LevelEditor
 			sUnit.LevelLocationY = (float)pos.Y;
 			sUnit.width = (float)rect_getting_drawn.Width;
 			sUnit.height = (float)rect_getting_drawn.Height;
+			sUnit.IsInteractable = false;
 
 			sUnits.Add(sUnit);
 
@@ -462,6 +463,7 @@ namespace LevelEditor
 				TriangleCheckBox.IsEnabled = false;
 
 				HideTriangleUiItems();
+				HideUnitUiItems();
 				ShowRectangleUiItems();
 			}
 			else if (name.Contains("Triangle"))
@@ -485,6 +487,7 @@ namespace LevelEditor
 
 				HideRectangleUiItems();
 				HideDoorUiItems();
+				HideUnitUiItems();
 				ShowTriangleUiItems();
 			}
 			else if (name.Contains("Player"))
@@ -505,6 +508,7 @@ namespace LevelEditor
 
 				HideTriangleUiItems();
 				HideDoorUiItems();
+				HideUnitUiItems();
 				ShowRectangleUiItems();
 			}
 			else if (name.Contains("Door"))
@@ -530,6 +534,7 @@ namespace LevelEditor
 
 				HideTriangleUiItems();
 				HideRectangleUiItems();
+				HideUnitUiItems();
 				ShowDoorUiItems();
 			}
 			else
@@ -552,9 +557,13 @@ namespace LevelEditor
 				hTextBox.IsEnabled = false;
 				TriangleCheckBox.IsEnabled = false;
 
+				IsInteractableCheckBox.IsEnabled = true;
+				IsInteractableCheckBox.IsChecked = unit.IsInteractable;
+
 				HideTriangleUiItems();
 				HideDoorUiItems();
-				ShowRectangleUiItems();
+				HideRectangleUiItems();
+				ShowUnitUiItems();
 			}
 		}
 
@@ -704,6 +713,8 @@ namespace LevelEditor
 			{
 				float.TryParse(xTextBox.Text, out sUnit.LevelLocationX);
 				float.TryParse(yTextBox.Text, out sUnit.LevelLocationY);
+
+				sUnit.IsInteractable = IsInteractableCheckBox.IsChecked.HasValue ? IsInteractableCheckBox.IsChecked.Value : false;
 
 				MyCanvas.Children.Remove(selected_unit_rectangle);
 
@@ -1097,6 +1108,36 @@ namespace LevelEditor
 			hLabel.Visibility = Visibility.Hidden;
 		}
 
+		void ShowUnitUiItems()
+		{
+			xTextBox.Visibility = Visibility.Visible;
+			yTextBox.Visibility = Visibility.Visible;
+			wTextBox.Visibility = Visibility.Visible;
+			hTextBox.Visibility = Visibility.Visible;
+
+			xLabel.Visibility = Visibility.Visible;
+			yLabel.Visibility = Visibility.Visible;
+			wLabel.Visibility = Visibility.Visible;
+			hLabel.Visibility = Visibility.Visible;
+
+			IsInteractableCheckBox.Visibility = Visibility.Visible;
+		}
+
+		void HideUnitUiItems()
+		{
+			xTextBox.Visibility = Visibility.Hidden;
+			yTextBox.Visibility = Visibility.Hidden;
+			wTextBox.Visibility = Visibility.Hidden;
+			hTextBox.Visibility = Visibility.Hidden;
+
+			xLabel.Visibility = Visibility.Hidden;
+			yLabel.Visibility = Visibility.Hidden;
+			wLabel.Visibility = Visibility.Hidden;
+			hLabel.Visibility = Visibility.Hidden;
+
+			IsInteractableCheckBox.Visibility = Visibility.Hidden;
+		}
+
 		void ShowTriangleUiItems()
 		{
 			p1xTextBox.Visibility = Visibility.Visible;
@@ -1287,6 +1328,7 @@ namespace LevelEditor
 		public float LevelLocationY = 0.0f;
 		public float width = 0.0f;
 		public float height = 0.0f;
+		public bool IsInteractable = false;
 
 		public SerializedUnit()
 		{
@@ -1308,7 +1350,7 @@ namespace LevelEditor
 		public string UnitName = "";
 		public int HitPoints = 0;
 		public float MovementSpeed = 0.0f;
-	
+
 		public string InstanceOfUnitName = "";
 		public float LevelLocationX = 0.0f;
 		public float LevelLocationY = 0.0f;

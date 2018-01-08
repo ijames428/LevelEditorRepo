@@ -46,6 +46,8 @@
 			<Label Name="p2yLabel"  Canvas.Right="174" Canvas.Top="604" Visibility="Hidden">P2Y:</Label>
 			<TextBox Name="p2yTextBox" Canvas.Right="98" Canvas.Top="608" Width="75" Visibility="Hidden"></TextBox>
 
+			<CheckBox Name="IsInteractableCheckBox" Canvas.Right="105" Canvas.Top="627" Visibility="Hidden">Is Interactable</CheckBox>
+
 			<Label Name="doorActivatorLabel"  Canvas.Right="148" Canvas.Top="622" Visibility="Hidden">Activator</Label>
 			<TextBox Name="doorActivatorTextBox" Canvas.Right="72" Canvas.Top="626" Width="75" Visibility="Hidden"></TextBox>
 
