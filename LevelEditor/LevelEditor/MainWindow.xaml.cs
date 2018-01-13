@@ -30,7 +30,8 @@ namespace LevelEditor
 		const int OBJECT_SELECTION_RECTANGLE = 0;
 		const int OBJECT_SELECTION_TRIANGLE = 1;
 		const int OBJECT_SELECTION_DOOR = 2;
-		const int OBJECT_SELECTION_UNIT_STARTING_INDEX = 3;
+		const int OBJECT_SELECTION_TRIGGER = 3;
+		const int OBJECT_SELECTION_UNIT_STARTING_INDEX = 4;
 
 		Point mouse_pressed_pos = new Point();
 
@@ -67,6 +68,11 @@ namespace LevelEditor
 		List<SerializedUnit> sUnits = new List<SerializedUnit>();
 		string selected_unit_name = "";
 
+		Rectangle selected_trigger = null;
+		Dictionary<string, Rectangle> trigger_rects = new Dictionary<string, Rectangle>();
+		List<SerializedTrigger> sTriggers = new List<SerializedTrigger>();
+		string selected_trigger_name = "";
+
 		public MainWindow()
 		{
 			InitializeComponent();
@@ -84,7 +90,7 @@ namespace LevelEditor
 
 			mouse_pressed_pos = e.GetPosition(MyCanvas);
 
-			if (ListOfObjectTypes.SelectedIndex == OBJECT_SELECTION_RECTANGLE)
+			if (ListOfObjectTypes.SelectedIndex == OBJECT_SELECTION_RECTANGLE || ListOfObjectTypes.SelectedIndex == OBJECT_SELECTION_TRIGGER)
 			{
 				rect_getting_drawn = new Rectangle
 				{
@@ -217,6 +223,44 @@ namespace LevelEditor
 					sRect.height = (float)rect_getting_drawn.Height;
 
 					sRects.Add(sRect);
+
+					Select(name);
+
+					rect_getting_drawn = null;
+				}
+				else if (ListOfObjectTypes.SelectedIndex == OBJECT_SELECTION_TRIGGER)
+				{
+					int item_index = 0;
+					string name = "Trigger " + ListOfObjects.Items.Count;
+
+					while (GetSerializedTrigger(name) != null)
+					{
+						item_index++;
+						name = "Trigger " + item_index;
+					}
+
+					ListBoxItem item = new ListBoxItem();
+					item.Content = name;
+					item.Selected += OnSelected;
+					item.Unselected += OnUnselected;
+					ListOfObjects.Items.Add(item);
+
+					trigger_rects.Add(name, rect_getting_drawn);
+
+					var pos = e.GetPosition(MyCanvas);
+
+					float top_left_x = Math.Min((float)mouse_pressed_pos.X, (float)pos.X);
+					float top_left_y = Math.Min((float)mouse_pressed_pos.Y, (float)pos.Y);
+
+					SerializedTrigger sTrigger = new SerializedTrigger();
+					sTrigger.type = "Trigger";
+					sTrigger.name = name;
+					sTrigger.x = top_left_x;
+					sTrigger.y = top_left_y;
+					sTrigger.width = (float)rect_getting_drawn.Width;
+					sTrigger.height = (float)rect_getting_drawn.Height;
+
+					sTriggers.Add(sTrigger);
 
 					Select(name);
 
@@ -464,6 +508,8 @@ namespace LevelEditor
 
 				HideTriangleUiItems();
 				HideUnitUiItems();
+				HideDoorUiItems();
+				HideTriggerUiItems();
 				ShowRectangleUiItems();
 			}
 			else if (name.Contains("Triangle"))
@@ -488,6 +534,7 @@ namespace LevelEditor
 				HideRectangleUiItems();
 				HideDoorUiItems();
 				HideUnitUiItems();
+				HideTriggerUiItems();
 				ShowTriangleUiItems();
 			}
 			else if (name.Contains("Player"))
@@ -509,6 +556,7 @@ namespace LevelEditor
 				HideTriangleUiItems();
 				HideDoorUiItems();
 				HideUnitUiItems();
+				HideTriggerUiItems();
 				ShowRectangleUiItems();
 			}
 			else if (name.Contains("Door"))
@@ -535,7 +583,35 @@ namespace LevelEditor
 				HideTriangleUiItems();
 				HideRectangleUiItems();
 				HideUnitUiItems();
+				HideTriggerUiItems();
 				ShowDoorUiItems();
+			}
+			else if (name.Contains("Trigger"))
+			{
+				DeleteButton.IsEnabled = true;
+
+				selected_trigger_name = name;
+
+				selected_trigger = trigger_rects[name];
+				selected_trigger.Stroke = SelectedColor;
+
+				SerializedTrigger sTrigger = GetSerializedTrigger(name);
+
+				xTextBox.Text = sTrigger.x.ToString();
+				yTextBox.Text = sTrigger.y.ToString();
+				wTextBox.Text = sTrigger.width.ToString();
+				hTextBox.Text = sTrigger.height.ToString();
+				activityTextBox.Text = sTrigger.activity;
+
+				wTextBox.IsEnabled = false;
+				hTextBox.IsEnabled = false;
+				TriangleCheckBox.IsEnabled = false;
+
+				HideTriangleUiItems();
+				HideUnitUiItems();
+				HideDoorUiItems();
+				HideRectangleUiItems();
+				ShowTriggerUiItems();
 			}
 			else
 			{
@@ -563,6 +639,7 @@ namespace LevelEditor
 				HideTriangleUiItems();
 				HideDoorUiItems();
 				HideRectangleUiItems();
+				HideTriggerUiItems();
 				ShowUnitUiItems();
 			}
 		}
@@ -594,6 +671,11 @@ namespace LevelEditor
 				selected_unit_rectangle.Stroke = DormantColor;
 				HideRectangleUiItems();
 			}
+			else if (selected_trigger != null)
+			{
+				selected_trigger.Stroke = DormantColor;
+				HideRectangleUiItems();
+			}
 
 			DeleteButton.IsEnabled = false;
 
@@ -612,12 +694,16 @@ namespace LevelEditor
 			selected_unit_name = "";
 			selected_unit_rectangle = null;
 
+			selected_trigger_name = "";
+			selected_trigger = null;
+
 			xTextBox.Text = "";
 			yTextBox.Text = "";
 			wTextBox.Text = "";
 			hTextBox.Text = "";
 			TriangleCheckBox.IsEnabled = false;
 
+			activityTextBox.Text = "";
 			doorActivatorTextBox.Text = "";
 		}
 
@@ -723,6 +809,26 @@ namespace LevelEditor
 
 				MyCanvas.Children.Add(selected_unit_rectangle);
 			}
+
+			SerializedTrigger sTrigger = GetSerializedTrigger(selected_trigger_name);
+			if (sTrigger != null)
+			{
+				float.TryParse(xTextBox.Text, out sTrigger.x);
+				float.TryParse(yTextBox.Text, out sTrigger.y);
+				float.TryParse(wTextBox.Text, out sTrigger.width);
+				float.TryParse(hTextBox.Text, out sTrigger.height);
+				sTrigger.activity = activityTextBox.Text;
+
+				selected_trigger.Width = sTrigger.width;
+				selected_trigger.Height = sTrigger.height;
+
+				MyCanvas.Children.Remove(selected_trigger);
+
+				Canvas.SetLeft(selected_trigger, sTrigger.x);
+				Canvas.SetTop(selected_trigger, sTrigger.y);
+
+				MyCanvas.Children.Add(selected_trigger);
+			}
 		}
 
 		private void Delete(object sender, RoutedEventArgs e)
@@ -806,6 +912,26 @@ namespace LevelEditor
 					}
 				}
 			}
+
+			SerializedTrigger sTrigger = GetSerializedTrigger(selected_trigger_name);
+			if (sTrigger != null)
+			{
+				isDataDirty = true;
+				trigger_rects.Remove(selected_trigger_name);
+				sTriggers.Remove(sTrigger);
+				MyCanvas.Children.Remove(selected_trigger);
+
+				for (int i = 0; i < ListOfObjects.Items.Count; i++)
+				{
+					ListBoxItem item = (ListBoxItem)ListOfObjects.Items[i];
+
+					if (item.Content.ToString() == selected_trigger_name)
+					{
+						ListOfObjects.Items.Remove(ListOfObjects.Items[i]);
+						break;
+					}
+				}
+			}
 		}
 
 		private void Save(object sender, RoutedEventArgs e)
@@ -815,6 +941,7 @@ namespace LevelEditor
 			sObjects.rectangles = sRects;
 			sObjects.triangles = sTris;
 			sObjects.doors = sDoors;
+			sObjects.triggers = sTriggers;
 			sObjects.bestiaryFilePaths = ImportedBestiariesFilePaths;
 			sObjects.units = sUnits;
 
@@ -870,6 +997,7 @@ namespace LevelEditor
 				sRects = sObjects.rectangles;
 				sTris = sObjects.triangles;
 				sDoors = sObjects.doors;
+				sTriggers = sObjects.triggers;
 				ImportedBestiariesFilePaths = sObjects.bestiaryFilePaths;
 				sUnits = sObjects.units;
 
@@ -877,6 +1005,7 @@ namespace LevelEditor
 				triangles.Clear();
 				door_rects.Clear();
 				unit_rects.Clear();
+				trigger_rects.Clear();
 
 				ListOfObjectTypes.Items.Clear();
 
@@ -891,6 +1020,10 @@ namespace LevelEditor
 				ListBoxItem doorItem = new ListBoxItem();
 				doorItem.Content = "Door";
 				ListOfObjectTypes.Items.Add(doorItem);
+
+				ListBoxItem triggerItem = new ListBoxItem();
+				triggerItem.Content = "Trigger";
+				ListOfObjectTypes.Items.Add(triggerItem);
 
 				ListOfObjects.Items.Clear();
 				MyCanvas.Children.Clear();
@@ -1003,6 +1136,28 @@ namespace LevelEditor
 					ListOfObjects.Items.Add(item);
 				}
 
+				for (int i = 0; i < sTriggers.Count(); i++)
+				{
+					rect = new Rectangle
+					{
+						Stroke = DormantColor,
+						StrokeThickness = 1,
+						Height = sTriggers[i].height,
+						Width = sTriggers[i].width
+					};
+					Canvas.SetLeft(rect, sTriggers[i].x);
+					Canvas.SetTop(rect, sTriggers[i].y);
+					MyCanvas.Children.Add(rect);
+
+					trigger_rects.Add(sTriggers[i].name, rect);
+
+					item = new ListBoxItem();
+					item.Content = sTriggers[i].name;
+					item.Selected += OnSelected;
+					item.Unselected += OnUnselected;
+					ListOfObjects.Items.Add(item);
+				}
+
 				ImportBestiaries();
 
 				isDataDirty = false;
@@ -1043,6 +1198,19 @@ namespace LevelEditor
 				if (name == sDoors[i].name)
 				{
 					return sDoors[i];
+				}
+			}
+
+			return null;
+		}
+
+		private SerializedTrigger GetSerializedTrigger(string name)
+		{
+			for (int i = 0; i < sTriggers.Count; i++)
+			{
+				if (name == sTriggers[i].name)
+				{
+					return sTriggers[i];
 				}
 			}
 
@@ -1106,6 +1274,38 @@ namespace LevelEditor
 			yLabel.Visibility = Visibility.Hidden;
 			wLabel.Visibility = Visibility.Hidden;
 			hLabel.Visibility = Visibility.Hidden;
+		}
+
+		void ShowTriggerUiItems()
+		{
+			xTextBox.Visibility = Visibility.Visible;
+			yTextBox.Visibility = Visibility.Visible;
+			wTextBox.Visibility = Visibility.Visible;
+			hTextBox.Visibility = Visibility.Visible;
+
+			xLabel.Visibility = Visibility.Visible;
+			yLabel.Visibility = Visibility.Visible;
+			wLabel.Visibility = Visibility.Visible;
+			hLabel.Visibility = Visibility.Visible;
+
+			activityTextBox.Visibility = Visibility.Visible;
+			activityLabel.Visibility = Visibility.Visible;
+		}
+
+		void HideTriggerUiItems()
+		{
+			xTextBox.Visibility = Visibility.Hidden;
+			yTextBox.Visibility = Visibility.Hidden;
+			wTextBox.Visibility = Visibility.Hidden;
+			hTextBox.Visibility = Visibility.Hidden;
+
+			xLabel.Visibility = Visibility.Hidden;
+			yLabel.Visibility = Visibility.Hidden;
+			wLabel.Visibility = Visibility.Hidden;
+			hLabel.Visibility = Visibility.Hidden;
+
+			activityTextBox.Visibility = Visibility.Hidden;
+			activityLabel.Visibility = Visibility.Hidden;
 		}
 
 		void ShowUnitUiItems()
@@ -1298,6 +1498,16 @@ namespace LevelEditor
 		}
 	}
 
+	public class SerializedTrigger : SerializedRectangle
+	{
+		public string activity;
+
+		public SerializedTrigger()
+		{
+			activity = "";
+		}
+	}
+
 	public class SerializedPlayer : SerializedRectangle
 	{
 		public SerializedPlayer()
@@ -1311,6 +1521,7 @@ namespace LevelEditor
 		public List<SerializedRectangle> rectangles;
 		public List<SerializedTriangle> triangles;
 		public List<SerializedDoor> doors;
+		public List<SerializedTrigger> triggers;
 		public List<string> bestiaryFilePaths;
 		public List<SerializedUnit> units;
 
