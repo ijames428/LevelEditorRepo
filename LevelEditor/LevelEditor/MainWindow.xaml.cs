@@ -628,6 +628,7 @@ namespace LevelEditor
 				yTextBox.Text = unit.LevelLocationY.ToString();
 				wTextBox.Text = "N/A";
 				hTextBox.Text = "N/A";
+				activityTextBox.Text = unit.activity;
 
 				wTextBox.IsEnabled = false;
 				hTextBox.IsEnabled = false;
@@ -799,6 +800,7 @@ namespace LevelEditor
 			{
 				float.TryParse(xTextBox.Text, out sUnit.LevelLocationX);
 				float.TryParse(yTextBox.Text, out sUnit.LevelLocationY);
+				sUnit.activity = activityTextBox.Text;
 
 				sUnit.IsInteractable = IsInteractableCheckBox.IsChecked.HasValue ? IsInteractableCheckBox.IsChecked.Value : false;
 
@@ -1320,6 +1322,9 @@ namespace LevelEditor
 			wLabel.Visibility = Visibility.Visible;
 			hLabel.Visibility = Visibility.Visible;
 
+			activityTextBox.Visibility = Visibility.Visible;
+			activityLabel.Visibility = Visibility.Visible;
+
 			IsInteractableCheckBox.Visibility = Visibility.Visible;
 		}
 
@@ -1334,6 +1339,9 @@ namespace LevelEditor
 			yLabel.Visibility = Visibility.Hidden;
 			wLabel.Visibility = Visibility.Hidden;
 			hLabel.Visibility = Visibility.Hidden;
+
+			activityTextBox.Visibility = Visibility.Hidden;
+			activityLabel.Visibility = Visibility.Hidden;
 
 			IsInteractableCheckBox.Visibility = Visibility.Hidden;
 		}
@@ -1500,11 +1508,10 @@ namespace LevelEditor
 
 	public class SerializedTrigger : SerializedRectangle
 	{
-		public string activity;
+		public string activity = "";
 
 		public SerializedTrigger()
 		{
-			activity = "";
 		}
 	}
 
@@ -1540,6 +1547,7 @@ namespace LevelEditor
 		public float width = 0.0f;
 		public float height = 0.0f;
 		public bool IsInteractable = false;
+		public string activity = "";
 
 		public SerializedUnit()
 		{

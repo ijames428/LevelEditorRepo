@@ -61,8 +61,8 @@
 			<Label Name="doorActivatorLabel"  Canvas.Right="148" Canvas.Top="622" Visibility="Hidden">Activator</Label>
 			<TextBox Name="doorActivatorTextBox" Canvas.Right="72" Canvas.Top="626" Width="75" Visibility="Hidden"></TextBox>
 
-			<Label Name="activityLabel"  Canvas.Right="148" Canvas.Top="622" Visibility="Hidden">Activity</Label>
-			<TextBox Name="activityTextBox" Canvas.Right="72" Canvas.Top="626" Width="75" Visibility="Hidden"></TextBox>
+			<Label Name="activityLabel"  Canvas.Right="148" Canvas.Top="642" Visibility="Hidden">Activity</Label>
+			<TextBox Name="activityTextBox" Canvas.Right="72" Canvas.Top="646" Width="75" Visibility="Hidden"></TextBox>
 
 			<Button Name="ApplyButton" Canvas.Right="5" Canvas.Top="554" Width="60" Click="Apply">Apply</Button>
 			<Button Name="DeleteButton" Canvas.Right="5" Canvas.Top="606" Width="60" Click="Delete">Delete</Button>
