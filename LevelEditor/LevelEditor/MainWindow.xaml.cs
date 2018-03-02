@@ -35,6 +35,8 @@ namespace LevelEditor
 
 		Point mouse_pressed_pos = new Point();
 
+		System.Windows.Threading.DispatcherTimer updateTimer = new System.Windows.Threading.DispatcherTimer();
+
 		Polygon triangle_getting_drawn = null;
 
 		//Polygon triangle_getting_made = null;
@@ -73,6 +75,16 @@ namespace LevelEditor
 		List<SerializedTrigger> sTriggers = new List<SerializedTrigger>();
 		string selected_trigger_name = "";
 
+		ArtImage selected_image = null;
+		List<BitmapImage> bitmap = new List<BitmapImage>();
+		List<ArtImage> artImages = new List<ArtImage>();
+		string selected_image_name = "";
+
+		ParallaxingBackground selected_parallaxing_background = null;
+		List<BitmapImage> parallaxing_background_bitmaps = new List<BitmapImage>();
+		List<ParallaxingBackground> parallaxingBackgrounds = new List<ParallaxingBackground>();
+		string selected_parallaxing_background_name = "";
+
 		public MainWindow()
 		{
 			InitializeComponent();
@@ -81,7 +93,129 @@ namespace LevelEditor
 			SourceInitialized += (s, a) => WindowState = WindowState.Maximized;
 			Show();
 
+			updateTimer.Tick += Update;
+			updateTimer.Interval = TimeSpan.FromSeconds(1.0 / 30.0);
+			updateTimer.Start();
+
 			CreatePlayer();
+		}
+
+		private void Update(object sender, EventArgs e)
+		{
+			if (xTextBox.IsFocused || yTextBox.IsFocused || wTextBox.IsFocused || hTextBox.IsFocused)
+			{
+				if (playerRectSelected)
+				{
+					float.TryParse(xTextBox.Text, out sPlayer.x);
+					float.TryParse(yTextBox.Text, out sPlayer.y);
+
+					playerRectangle.Width = sPlayer.width;
+					playerRectangle.Height = sPlayer.height;
+
+					Canvas.SetLeft(playerRectangle, sPlayer.x);
+					Canvas.SetTop(playerRectangle, sPlayer.y);
+				}
+
+				SerializedRectangle sRect = GetSerializedRect(selected_rect_name);
+				if (sRect != null)
+				{
+					float.TryParse(xTextBox.Text, out sRect.x);
+					float.TryParse(yTextBox.Text, out sRect.y);
+					float.TryParse(wTextBox.Text, out sRect.width);
+					float.TryParse(hTextBox.Text, out sRect.height);
+
+					selected_rectangle.Width = sRect.width;
+					selected_rectangle.Height = sRect.height;
+
+					Canvas.SetLeft(selected_rectangle, sRect.x);
+					Canvas.SetTop(selected_rectangle, sRect.y);
+				}
+
+				SerializedDoor sDoor = GetSerializedDoor(selected_door_name);
+				if (sDoor != null)
+				{
+					float.TryParse(xTextBox.Text, out sDoor.x);
+					float.TryParse(yTextBox.Text, out sDoor.y);
+					sDoor.activator = doorActivatorTextBox.Text;
+
+					Canvas.SetLeft(selected_door, sDoor.x);
+					Canvas.SetTop(selected_door, sDoor.y);
+				}
+
+				SerializedUnit sUnit = GetSerializedUnit(selected_unit_name);
+				if (sUnit != null)
+				{
+					float.TryParse(xTextBox.Text, out sUnit.LevelLocationX);
+					float.TryParse(yTextBox.Text, out sUnit.LevelLocationY);
+					sUnit.activity = activityTextBox.Text;
+
+					sUnit.IsInteractable = IsInteractableCheckBox.IsChecked.HasValue ? IsInteractableCheckBox.IsChecked.Value : false;
+
+					Canvas.SetLeft(selected_unit_rectangle, sUnit.LevelLocationX);
+					Canvas.SetTop(selected_unit_rectangle, sUnit.LevelLocationY);
+				}
+
+				SerializedTrigger sTrigger = GetSerializedTrigger(selected_trigger_name);
+				if (sTrigger != null)
+				{
+					float.TryParse(xTextBox.Text, out sTrigger.x);
+					float.TryParse(yTextBox.Text, out sTrigger.y);
+					float.TryParse(wTextBox.Text, out sTrigger.width);
+					float.TryParse(hTextBox.Text, out sTrigger.height);
+					sTrigger.activity = activityTextBox.Text;
+
+					selected_trigger.Width = sTrigger.width;
+					selected_trigger.Height = sTrigger.height;
+
+					Canvas.SetLeft(selected_trigger, sTrigger.x);
+					Canvas.SetTop(selected_trigger, sTrigger.y);
+				}
+
+				ArtImage image = GetArtImage(selected_image_name);
+				if (image != null)
+				{
+					float.TryParse(xTextBox.Text, out image.x);
+					float.TryParse(yTextBox.Text, out image.y);
+					wTextBox.Text = "";
+					hTextBox.Text = "";
+
+					Canvas.SetLeft(image.image, image.x);
+					Canvas.SetTop(image.image, image.y);
+				}
+			}
+			else if (p1xTextBox.IsFocused || p1yTextBox.IsFocused || p2xTextBox.IsFocused || p2yTextBox.IsFocused)
+			{
+				SerializedTriangle sTri = GetSerializedTriangle(selected_triangle_name);
+				if (sTri != null)
+				{
+					float newP1X = 0.0f;
+					float newP1Y = 0.0f;
+					float newP2X = 0.0f;
+					float newP2Y = 0.0f;
+
+					float.TryParse(p1xTextBox.Text, out newP1X);
+					float.TryParse(p1yTextBox.Text, out newP1Y);
+					float.TryParse(p2xTextBox.Text, out newP2X);
+					float.TryParse(p2yTextBox.Text, out newP2Y);
+
+					//sTri.right_angle_above_line = TriangleCheckBox.IsChecked.HasValue ? TriangleCheckBox.IsChecked.Value : false;
+
+					selected_triangle.Points[0] = new Point(newP1X, newP1Y);
+					selected_triangle.Points[2] = new Point(newP2X, newP2Y);
+
+					if (sTri.right_angle_above_line)
+					{
+						selected_triangle.Points[1] = new Point(selected_triangle.Points[2].X, selected_triangle.Points[0].Y);
+					}
+					else
+					{
+						selected_triangle.Points[1] = new Point(selected_triangle.Points[0].X, selected_triangle.Points[2].Y);
+					}
+
+					Canvas.SetLeft(selected_triangle, 0.0f);
+					Canvas.SetTop(selected_triangle, 0.0f);
+				}
+			}
 		}
 
 		public void CanvasDown(object sender, MouseButtonEventArgs e)
@@ -613,6 +747,48 @@ namespace LevelEditor
 				HideRectangleUiItems();
 				ShowTriggerUiItems();
 			}
+			else if (name.Contains("Image"))
+			{
+				DeleteButton.IsEnabled = true;
+
+				selected_image_name = name;
+
+				ArtImage image = GetArtImage(name);
+				selected_image = image;
+
+				xTextBox.Text = image.x.ToString();
+				yTextBox.Text = image.y.ToString();
+				wTextBox.Text = "";
+				hTextBox.Text = "";
+				TriangleCheckBox.IsEnabled = false;
+
+				HideTriangleUiItems();
+				HideUnitUiItems();
+				HideDoorUiItems();
+				HideTriggerUiItems();
+				ShowRectangleUiItems();
+			}
+			else if (name.Contains("Layer"))
+			{
+				DeleteButton.IsEnabled = true;
+
+				selected_parallaxing_background_name = name;
+
+				ParallaxingBackground parallaxing_background = GetParallaxingBackground(name);
+				selected_parallaxing_background = parallaxing_background;
+
+				xTextBox.Text = "";
+				yTextBox.Text = "";
+				wTextBox.Text = "";
+				hTextBox.Text = "";
+				TriangleCheckBox.IsEnabled = false;
+
+				HideTriangleUiItems();
+				HideUnitUiItems();
+				HideDoorUiItems();
+				HideTriggerUiItems();
+				ShowRectangleUiItems();
+			}
 			else
 			{
 				DeleteButton.IsEnabled = true;
@@ -677,6 +853,10 @@ namespace LevelEditor
 				selected_trigger.Stroke = DormantColor;
 				HideRectangleUiItems();
 			}
+			else if (selected_image != null)
+			{
+				HideRectangleUiItems();
+			}
 
 			DeleteButton.IsEnabled = false;
 
@@ -697,6 +877,12 @@ namespace LevelEditor
 
 			selected_trigger_name = "";
 			selected_trigger = null;
+
+			selected_image_name = "";
+			selected_image = null;
+
+			selected_parallaxing_background_name = "";
+			selected_parallaxing_background = null;
 
 			xTextBox.Text = "";
 			yTextBox.Text = "";
@@ -831,6 +1017,22 @@ namespace LevelEditor
 
 				MyCanvas.Children.Add(selected_trigger);
 			}
+
+			ArtImage image = GetArtImage(selected_image_name);
+			if (image != null)
+			{
+				float.TryParse(xTextBox.Text, out image.x);
+				float.TryParse(yTextBox.Text, out image.y);
+				wTextBox.Text = "";
+				hTextBox.Text = "";
+
+				MyCanvas.Children.Remove(image.image);
+
+				Canvas.SetLeft(image.image, image.x);
+				Canvas.SetTop(image.image, image.y);
+
+				MyCanvas.Children.Add(image.image);
+			}
 		}
 
 		private void Delete(object sender, RoutedEventArgs e)
@@ -934,6 +1136,44 @@ namespace LevelEditor
 					}
 				}
 			}
+
+			ArtImage image = GetArtImage(selected_image_name);
+			if (image != null)
+			{
+				isDataDirty = true;
+				artImages.Remove(image);
+				MyCanvas.Children.Remove(image.image);
+
+				for (int i = 0; i < ListOfObjects.Items.Count; i++)
+				{
+					ListBoxItem item = (ListBoxItem)ListOfObjects.Items[i];
+
+					if (item.Content.ToString() == selected_image_name)
+					{
+						ListOfObjects.Items.Remove(ListOfObjects.Items[i]);
+						break;
+					}
+				}
+			}
+
+			ParallaxingBackground parallaxing_background = GetParallaxingBackground(selected_parallaxing_background_name);
+			if (parallaxing_background != null)
+			{
+				isDataDirty = true;
+				parallaxingBackgrounds.Remove(parallaxing_background);
+				MyCanvas.Children.Remove(parallaxing_background.image);
+
+				for (int i = 0; i < ListOfParallaxingBackgrounds.Items.Count; i++)
+				{
+					ListBoxItem item = (ListBoxItem)ListOfParallaxingBackgrounds.Items[i];
+
+					if (item.Content.ToString() == selected_parallaxing_background_name)
+					{
+						ListOfParallaxingBackgrounds.Items.Remove(ListOfParallaxingBackgrounds.Items[i]);
+						break;
+					}
+				}
+			}
 		}
 
 		private void Save(object sender, RoutedEventArgs e)
@@ -946,6 +1186,8 @@ namespace LevelEditor
 			sObjects.triggers = sTriggers;
 			sObjects.bestiaryFilePaths = ImportedBestiariesFilePaths;
 			sObjects.units = sUnits;
+			sObjects.images = artImages;
+			sObjects.parallaxingBackgrounds = parallaxingBackgrounds;
 
 			string jsonStr = JsonConvert.SerializeObject(sObjects);
 
@@ -1002,6 +1244,8 @@ namespace LevelEditor
 				sTriggers = sObjects.triggers;
 				ImportedBestiariesFilePaths = sObjects.bestiaryFilePaths;
 				sUnits = sObjects.units;
+				artImages = sObjects.images;
+				parallaxingBackgrounds = sObjects.parallaxingBackgrounds;
 
 				rectangles.Clear();
 				triangles.Clear();
@@ -1160,11 +1404,54 @@ namespace LevelEditor
 					ListOfObjects.Items.Add(item);
 				}
 
+				for (int i = 0; i < artImages.Count(); i++)
+				{
+					LoadArtImage(artImages[i]);
+				}
+
+				if (parallaxingBackgrounds != null)
+				{
+					for (int i = 0; i < parallaxingBackgrounds.Count(); i++)
+					{
+						LoadParallaxingBackground(parallaxingBackgrounds[i]);
+					}
+				}
+				else
+				{
+					parallaxingBackgrounds = new List<ParallaxingBackground>();
+				}
+
 				ImportBestiaries();
 
 				isDataDirty = false;
 				Deselect();
 			}
+		}
+
+		private ArtImage GetArtImage(string name)
+		{
+			for (int i = 0; i < artImages.Count; i++)
+			{
+				if (name == artImages[i].name)
+				{
+					return artImages[i];
+				}
+			}
+
+			return null;
+		}
+
+		private ParallaxingBackground GetParallaxingBackground(string name)
+		{
+			for (int i = 0; i < parallaxingBackgrounds.Count; i++)
+			{
+				if (name == parallaxingBackgrounds[i].name)
+				{
+					return parallaxingBackgrounds[i];
+				}
+			}
+
+			return null;
 		}
 
 		private SerializedRectangle GetSerializedRect(string name)
@@ -1463,6 +1750,232 @@ namespace LevelEditor
 				isDataDirty = false;
 			}
 		}
+
+		private void AddImage_Click(object sender, RoutedEventArgs e)
+		{
+			OpenFileDialog openFileDialog = new OpenFileDialog();
+
+			openFileDialog.Filter = "png files (*.png)|*.png|All files (*.*)|*.*";
+			openFileDialog.FilterIndex = 2;
+			openFileDialog.RestoreDirectory = true;
+
+			if (openFileDialog.ShowDialog() == true)
+			{
+				if (!string.IsNullOrWhiteSpace(openFileDialog.FileName))
+				{
+					CreateArtImage(openFileDialog.FileName);
+				}
+			}
+		}
+
+		public void CreateArtImage(string file_path_and_name)
+		{
+			BitmapImage bitmap = new BitmapImage(new Uri(file_path_and_name, UriKind.Absolute));
+			Image image = new Image();
+			image.Source = bitmap;
+			image.Height = bitmap.PixelHeight / 6.0;
+			image.Width = bitmap.PixelWidth / 6.0;
+
+			ArtImage newArtImage = new ArtImage();
+			newArtImage.FilePath = file_path_and_name;
+
+			float left = 0.0f;
+			float top = 0.0f;
+
+			SerializedRectangle srect = GetSerializedRect(selected_rect_name);
+			if (srect != null)
+			{
+				left = srect.x;
+				top = srect.y;
+			}
+
+			newArtImage.x = left;
+			newArtImage.y = top;
+			newArtImage.PixelWidth = bitmap.PixelWidth;
+			newArtImage.PixelHeight = bitmap.PixelHeight;
+			newArtImage.image = image;
+			Canvas.SetLeft(image, newArtImage.x);
+			Canvas.SetTop(image, newArtImage.y);
+
+			int item_index = 0;
+			string name = "Image " + ListOfObjects.Items.Count;
+
+			while (GetArtImage(name) != null)
+			{
+				item_index++;
+				name = "Image " + item_index;
+			}
+
+			newArtImage.name = name;
+
+			ListBoxItem item = new ListBoxItem();
+			item.Content = name;
+			item.Selected += OnSelected;
+			item.Unselected += OnUnselected;
+			ListOfObjects.Items.Add(item);
+
+			artImages.Add(newArtImage);
+			MyCanvas.Children.Add(image);
+		}
+
+		public void LoadArtImage(ArtImage art_image)
+		{
+			BitmapImage bitmap = new BitmapImage(new Uri(art_image.FilePath, UriKind.Absolute));
+
+			Image image = new Image();
+			image.Source = bitmap;
+			image.Height = bitmap.PixelHeight / 6.0;
+			image.Width = bitmap.PixelWidth / 6.0;
+
+			art_image.PixelWidth = bitmap.PixelWidth;
+			art_image.PixelHeight = bitmap.PixelHeight;
+			art_image.image = image;
+
+			Canvas.SetLeft(image, art_image.x);
+			Canvas.SetTop(image, art_image.y);
+
+			MyCanvas.Children.Add(image);
+
+			if (string.IsNullOrWhiteSpace(art_image.name))
+			{
+				int item_index = 0;
+				string name = "Image " + ListOfObjects.Items.Count;
+
+				while (GetArtImage(name) != null)
+				{
+					item_index++;
+					name = "Image " + item_index;
+				}
+
+				art_image.name = name;
+			}
+
+			ListBoxItem item = new ListBoxItem();
+			item.Content = art_image.name;
+			item.Selected += OnSelected;
+			item.Unselected += OnUnselected;
+			ListOfObjects.Items.Add(item);
+		}
+
+		private void AddParallaxingBackground_Click(object sender, RoutedEventArgs e)
+		{
+			OpenFileDialog openFileDialog = new OpenFileDialog();
+
+			openFileDialog.Filter = "png files (*.png)|*.png|All files (*.*)|*.*";
+			openFileDialog.FilterIndex = 2;
+			openFileDialog.RestoreDirectory = true;
+
+			if (openFileDialog.ShowDialog() == true)
+			{
+				if (!string.IsNullOrWhiteSpace(openFileDialog.FileName))
+				{
+					CreateParallaxingBackground(openFileDialog.FileName);
+				}
+			}
+		}
+
+		public void CreateParallaxingBackground(string file_path_and_name)
+		{
+			BitmapImage bitmap = new BitmapImage(new Uri(file_path_and_name, UriKind.Absolute));
+			Image image = new Image();
+			image.Source = bitmap;
+			image.Height = bitmap.PixelHeight;
+			image.Width = bitmap.PixelWidth;
+
+			ParallaxingBackground newParallaxingBackground = new ParallaxingBackground();
+			newParallaxingBackground.FilePath = file_path_and_name;
+
+			float left = 0.0f;
+			float top = 0.0f;
+
+			newParallaxingBackground.x = left;
+			newParallaxingBackground.y = top;
+			newParallaxingBackground.PixelWidth = bitmap.PixelWidth;
+			newParallaxingBackground.PixelHeight = bitmap.PixelHeight;
+			newParallaxingBackground.image = image;
+			Canvas.SetLeft(image, newParallaxingBackground.x);
+			Canvas.SetTop(image, newParallaxingBackground.y);
+
+			int item_index = 0;
+			string name = "Layer " + ListOfParallaxingBackgrounds.Items.Count;
+
+			while (GetParallaxingBackground(name) != null)
+			{
+				item_index++;
+				name = "Layer " + item_index;
+			}
+
+			newParallaxingBackground.name = name;
+
+			ListBoxItem item = new ListBoxItem();
+			item.Content = name;
+			item.Selected += OnSelected;
+			item.Unselected += OnUnselected;
+			ListOfParallaxingBackgrounds.Items.Add(item);
+
+			parallaxingBackgrounds.Add(newParallaxingBackground);
+			MyCanvas.Children.Insert(0, image);
+		}
+
+		public void LoadParallaxingBackground(ParallaxingBackground parallaxing_background)
+		{
+			BitmapImage bitmap = new BitmapImage(new Uri(parallaxing_background.FilePath, UriKind.Absolute));
+
+			Image image = new Image();
+			image.Source = bitmap;
+			image.Height = bitmap.PixelHeight;
+			image.Width = bitmap.PixelWidth;
+
+			parallaxing_background.PixelWidth = bitmap.PixelWidth;
+			parallaxing_background.PixelHeight = bitmap.PixelHeight;
+			parallaxing_background.image = image;
+
+			Canvas.SetLeft(image, parallaxing_background.x);
+			Canvas.SetTop(image, parallaxing_background.y);
+
+			MyCanvas.Children.Insert(0, image);
+
+			if (string.IsNullOrWhiteSpace(parallaxing_background.name))
+			{
+				int item_index = 0;
+				string name = "Layer " + ListOfParallaxingBackgrounds.Items.Count;
+
+				while (GetArtImage(name) != null)
+				{
+					item_index++;
+					name = "Layer " + item_index;
+				}
+
+				parallaxing_background.name = name;
+			}
+
+			ListBoxItem item = new ListBoxItem();
+			item.Content = parallaxing_background.name;
+			item.Selected += OnSelected;
+			item.Unselected += OnUnselected;
+			ListOfParallaxingBackgrounds.Items.Add(item);
+		}
+
+		private void TriangleCheckBox_Click(object sender, RoutedEventArgs e)
+		{
+			SerializedTriangle sTri = GetSerializedTriangle(selected_triangle_name);
+			if (sTri != null)
+			{
+				sTri.right_angle_above_line = TriangleCheckBox.IsChecked.HasValue ? TriangleCheckBox.IsChecked.Value : false;
+
+				if (sTri.right_angle_above_line)
+				{
+					selected_triangle.Points[1] = new Point(selected_triangle.Points[2].X, selected_triangle.Points[0].Y);
+				}
+				else
+				{
+					selected_triangle.Points[1] = new Point(selected_triangle.Points[0].X, selected_triangle.Points[2].Y);
+				}
+
+				Canvas.SetLeft(selected_triangle, 0.0f);
+				Canvas.SetTop(selected_triangle, 0.0f);
+			}
+		}
 	}
 
 	public class SerializedObject
@@ -1531,6 +2044,8 @@ namespace LevelEditor
 		public List<SerializedTrigger> triggers;
 		public List<string> bestiaryFilePaths;
 		public List<SerializedUnit> units;
+		public List<ArtImage> images;
+		public List<ParallaxingBackground> parallaxingBackgrounds;
 
 		public SerializedObjects()
 		{
@@ -1577,6 +2092,38 @@ namespace LevelEditor
 		public float height = 0.0f;
 	
 		public Unit()
+		{
+		}
+	}
+
+	public class ArtImage
+	{
+		public string name = "";
+		public string FilePath = "";
+		public float x;
+		public float y;
+		public float PixelWidth;
+		public float PixelHeight;
+		[JsonIgnore]
+		public Image image;
+
+		public ArtImage()
+		{
+		}
+	}
+
+	public class ParallaxingBackground
+	{
+		public string name = "";
+		public string FilePath = "";
+		public float x;
+		public float y;
+		public float PixelWidth;
+		public float PixelHeight;
+		[JsonIgnore]
+		public Image image;
+
+		public ParallaxingBackground()
 		{
 		}
 	}
