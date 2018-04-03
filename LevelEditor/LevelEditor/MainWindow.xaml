@@ -42,8 +42,8 @@
 
 			<Label Background="White" FontWeight="Bold" HorizontalContentAlignment="Center" Canvas.Right="1" Width="200" Canvas.Top="222">Objects</Label>
 			<ListBox Name="ListOfObjects" Canvas.Right="1" Canvas.Top="246" Height="300" Width="200"></ListBox>
-			<Label Background="White" FontWeight="Bold" HorizontalContentAlignment="Center" Canvas.Right="1" Width="200" Canvas.Top="722">Parrallaxing Backgrounds</Label>
-			<ListBox Name="ListOfParallaxingBackgrounds" Canvas.Right="1" Canvas.Top="746" Height="100" Width="200"></ListBox>
+			<Label Background="White" FontWeight="Bold" HorizontalContentAlignment="Center" Canvas.Right="1" Width="200" Canvas.Top="770">Parrallaxing Backgrounds</Label>
+			<ListBox Name="ListOfParallaxingBackgrounds" Canvas.Right="1" Canvas.Top="796" Height="100" Width="200"></ListBox>
 			<!--ComboBox Name="ShapeSelection" Canvas.Right="1">
 				<ComboBoxItem IsSelected="True">1 - Rectangle</ComboBoxItem>
 				<ComboBoxItem>2 - Triangle</ComboBoxItem>
@@ -74,8 +74,8 @@
 			<Label Name="doorActivatorLabel"  Canvas.Right="148" Canvas.Top="622" Visibility="Hidden">Activator</Label>
 			<TextBox Name="doorActivatorTextBox" Canvas.Right="72" Canvas.Top="626" Width="75" Visibility="Hidden"></TextBox>
 
-			<Label Name="activityLabel"  Canvas.Right="148" Canvas.Top="642" Visibility="Hidden">Activity</Label>
-			<TextBox Name="activityTextBox" Canvas.Right="72" Canvas.Top="646" Width="75" Visibility="Hidden"></TextBox>
+			<Label Name="activityLabel"  Canvas.Right="148" Canvas.Top="646">Activity</Label>
+			<TextBox Name="activityTextBox" Canvas.Right="1" Canvas.Top="670" Width="200" Height="100" TextWrapping="Wrap" ></TextBox>
 
 			<!--Button Name="ApplyButton" Canvas.Right="5" Canvas.Top="554" Width="60" Click="Apply">Apply</-->
 			<Button Name="DeleteButton" Canvas.Right="5" Canvas.Top="606" Width="60" Click="Delete">Delete</Button>

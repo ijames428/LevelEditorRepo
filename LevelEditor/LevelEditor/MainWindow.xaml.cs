@@ -102,7 +102,7 @@ namespace LevelEditor
 
 		private void Update(object sender, EventArgs e)
 		{
-			if (xTextBox.IsFocused || yTextBox.IsFocused || wTextBox.IsFocused || hTextBox.IsFocused)
+			if (xTextBox.IsFocused || yTextBox.IsFocused || wTextBox.IsFocused || hTextBox.IsFocused || activityTextBox.IsFocused)
 			{
 				if (playerRectSelected)
 				{
