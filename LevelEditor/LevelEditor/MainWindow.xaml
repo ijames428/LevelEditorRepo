@@ -74,8 +74,13 @@
 			<Label Name="doorActivatorLabel"  Canvas.Right="148" Canvas.Top="622" Visibility="Hidden">Activator</Label>
 			<TextBox Name="doorActivatorTextBox" Canvas.Right="72" Canvas.Top="626" Width="75" Visibility="Hidden"></TextBox>
 
-			<Label Name="activityLabel"  Canvas.Right="148" Canvas.Top="646">Activity</Label>
-			<TextBox Name="activityTextBox" Canvas.Right="1" Canvas.Top="670" Width="200" Height="100" TextWrapping="Wrap" ></TextBox>
+			<Label Name="activityLabel"  Canvas.Right="148" Canvas.Top="646" Visibility="Hidden">Activity</Label>
+			<TextBox Name="activityTextBox" Canvas.Right="1" Canvas.Top="670" Width="200" Height="100" TextWrapping="Wrap" Visibility="Hidden"></TextBox>
+			<Label Name="velocityXLabel"  Canvas.Right="164" Canvas.Top="634" Visibility="Hidden">Vel X:</Label>
+			<TextBox Name="velocityXTextBox" Canvas.Right="88" Canvas.Top="638" Width="75" Visibility="Hidden"></TextBox>
+			<Label Name="velocityYLabel"  Canvas.Right="164" Canvas.Top="652" Visibility="Hidden">Vel Y:</Label>
+			<TextBox Name="velocityYTextBox" Canvas.Right="88" Canvas.Top="656" Width="75" Visibility="Hidden"></TextBox>
+			<CheckBox Name="PassThroughCheckBox" Canvas.Right="82" Canvas.Top="674" Visibility="Hidden">Pass Through</CheckBox>
 
 			<!--Button Name="ApplyButton" Canvas.Right="5" Canvas.Top="554" Width="60" Click="Apply">Apply</-->
 			<Button Name="DeleteButton" Canvas.Right="5" Canvas.Top="606" Width="60" Click="Delete">Delete</Button>

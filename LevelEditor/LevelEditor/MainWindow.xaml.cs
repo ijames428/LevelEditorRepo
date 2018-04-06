@@ -102,7 +102,7 @@ namespace LevelEditor
 
 		private void Update(object sender, EventArgs e)
 		{
-			if (xTextBox.IsFocused || yTextBox.IsFocused || wTextBox.IsFocused || hTextBox.IsFocused || activityTextBox.IsFocused)
+			if (xTextBox.IsFocused || yTextBox.IsFocused || wTextBox.IsFocused || hTextBox.IsFocused || activityTextBox.IsFocused || velocityXTextBox.IsFocused || velocityYTextBox.IsFocused || PassThroughCheckBox.IsFocused || IsInteractableCheckBox.IsFocused)
 			{
 				if (playerRectSelected)
 				{
@@ -123,6 +123,10 @@ namespace LevelEditor
 					float.TryParse(yTextBox.Text, out sRect.y);
 					float.TryParse(wTextBox.Text, out sRect.width);
 					float.TryParse(hTextBox.Text, out sRect.height);
+					float.TryParse(velocityXTextBox.Text, out sRect.vel_x);
+					float.TryParse(velocityYTextBox.Text, out sRect.vel_y);
+
+					sRect.pass_through = PassThroughCheckBox.IsChecked.HasValue ? PassThroughCheckBox.IsChecked.Value : false;
 
 					selected_rectangle.Width = sRect.width;
 					selected_rectangle.Height = sRect.height;
@@ -345,16 +349,19 @@ namespace LevelEditor
 
 					var pos = e.GetPosition(MyCanvas);
 
-					float top_left_x = Math.Min((float)mouse_pressed_pos.X, (float)pos.X);
-					float top_left_y = Math.Min((float)mouse_pressed_pos.Y, (float)pos.Y);
+					double top_left_x = Math.Min(mouse_pressed_pos.X, pos.X);
+					double top_left_y = Math.Min(mouse_pressed_pos.Y, pos.Y);
 
 					SerializedRectangle sRect = new SerializedRectangle();
 					sRect.type = "Rectangle";
 					sRect.name = name;
-					sRect.x = top_left_x;
-					sRect.y = top_left_y;
+					sRect.x = (float)Math.Round(top_left_x);
+					sRect.y = (float)Math.Round(top_left_y);
 					sRect.width = (float)rect_getting_drawn.Width;
 					sRect.height = (float)rect_getting_drawn.Height;
+					sRect.vel_x = 0.0f;
+					sRect.vel_y = 0.0f;
+					sRect.pass_through = false;
 
 					sRects.Add(sRect);
 
@@ -383,14 +390,14 @@ namespace LevelEditor
 
 					var pos = e.GetPosition(MyCanvas);
 
-					float top_left_x = Math.Min((float)mouse_pressed_pos.X, (float)pos.X);
-					float top_left_y = Math.Min((float)mouse_pressed_pos.Y, (float)pos.Y);
+					double top_left_x = Math.Min(mouse_pressed_pos.X, pos.X);
+					double top_left_y = Math.Min(mouse_pressed_pos.Y, pos.Y);
 
 					SerializedTrigger sTrigger = new SerializedTrigger();
 					sTrigger.type = "Trigger";
 					sTrigger.name = name;
-					sTrigger.x = top_left_x;
-					sTrigger.y = top_left_y;
+					sTrigger.x = (float)Math.Round(top_left_x);
+					sTrigger.y = (float)Math.Round(top_left_y);
 					sTrigger.width = (float)rect_getting_drawn.Width;
 					sTrigger.height = (float)rect_getting_drawn.Height;
 
@@ -638,7 +645,14 @@ namespace LevelEditor
 				yTextBox.Text = sRect.y.ToString();
 				wTextBox.Text = sRect.width.ToString();
 				hTextBox.Text = sRect.height.ToString();
+				wTextBox.IsEnabled = true;
+				hTextBox.IsEnabled = true;
+
+				velocityXTextBox.Text = sRect.vel_x.ToString();
+				velocityYTextBox.Text = sRect.vel_y.ToString();
 				TriangleCheckBox.IsEnabled = false;
+				PassThroughCheckBox.IsEnabled = true;
+				PassThroughCheckBox.IsChecked = sRect.pass_through;
 
 				HideTriangleUiItems();
 				HideUnitUiItems();
@@ -888,6 +902,8 @@ namespace LevelEditor
 			yTextBox.Text = "";
 			wTextBox.Text = "";
 			hTextBox.Text = "";
+			velocityXTextBox.Text = "";
+			velocityYTextBox.Text = "";
 			TriangleCheckBox.IsEnabled = false;
 
 			activityTextBox.Text = "";
@@ -919,6 +935,10 @@ namespace LevelEditor
 				float.TryParse(yTextBox.Text, out sRect.y);
 				float.TryParse(wTextBox.Text, out sRect.width);
 				float.TryParse(hTextBox.Text, out sRect.height);
+				float.TryParse(velocityXTextBox.Text, out sRect.vel_x);
+				float.TryParse(velocityYTextBox.Text, out sRect.vel_y);
+
+				sRect.pass_through = PassThroughCheckBox.IsChecked.HasValue ? PassThroughCheckBox.IsChecked.Value : false;
 
 				selected_rectangle.Width = sRect.width;
 				selected_rectangle.Height = sRect.height;
@@ -1545,11 +1565,17 @@ namespace LevelEditor
 			yTextBox.Visibility = Visibility.Visible;
 			wTextBox.Visibility = Visibility.Visible;
 			hTextBox.Visibility = Visibility.Visible;
+			velocityXTextBox.Visibility = Visibility.Visible;
+			velocityYTextBox.Visibility = Visibility.Visible;
+			
 
 			xLabel.Visibility = Visibility.Visible;
 			yLabel.Visibility = Visibility.Visible;
 			wLabel.Visibility = Visibility.Visible;
 			hLabel.Visibility = Visibility.Visible;
+			velocityXLabel.Visibility = Visibility.Visible;
+			velocityYLabel.Visibility = Visibility.Visible;
+			PassThroughCheckBox.Visibility = Visibility.Visible;
 		}
 
 		void HideRectangleUiItems()
@@ -1558,11 +1584,16 @@ namespace LevelEditor
 			yTextBox.Visibility = Visibility.Hidden;
 			wTextBox.Visibility = Visibility.Hidden;
 			hTextBox.Visibility = Visibility.Hidden;
+			velocityXTextBox.Visibility = Visibility.Hidden;
+			velocityYTextBox.Visibility = Visibility.Hidden;
 
 			xLabel.Visibility = Visibility.Hidden;
 			yLabel.Visibility = Visibility.Hidden;
 			wLabel.Visibility = Visibility.Hidden;
 			hLabel.Visibility = Visibility.Hidden;
+			velocityXLabel.Visibility = Visibility.Hidden;
+			velocityYLabel.Visibility = Visibility.Hidden;
+			PassThroughCheckBox.Visibility = Visibility.Hidden;
 		}
 
 		void ShowTriggerUiItems()
@@ -1994,6 +2025,9 @@ namespace LevelEditor
 		public float y;
 		public float width;
 		public float height;
+		public float vel_x;
+		public float vel_y;
+		public bool pass_through;
 
 		public SerializedRectangle()
 		{
