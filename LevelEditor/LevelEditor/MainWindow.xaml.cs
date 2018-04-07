@@ -22,6 +22,8 @@ namespace LevelEditor
 	public partial class MainWindow : Window
 	{
 		bool isDataDirty = false;
+		string levelEditorFileName = "level_editor_settings.sav";
+		SerializedSettings Settings = new SerializedSettings();
 
 		SolidColorBrush TransformingColor = Brushes.LightGreen;
 		SolidColorBrush SelectedColor = Brushes.Green;
@@ -97,6 +99,34 @@ namespace LevelEditor
 			updateTimer.Interval = TimeSpan.FromSeconds(1.0 / 30.0);
 			updateTimer.Start();
 
+			while (!File.Exists(levelEditorFileName))
+			{
+				SetRootDirectory();
+
+				if (!File.Exists(levelEditorFileName))
+				{
+					string msg = "You must select a Root Folder in order to proceed.  Do you wish to close the program?";
+					MessageBoxResult yesOrNoResult =
+					  MessageBox.Show(
+						msg,
+						"Data App",
+						MessageBoxButton.YesNo,
+						MessageBoxImage.Warning);
+					if (yesOrNoResult == MessageBoxResult.Yes || yesOrNoResult == MessageBoxResult.OK)
+					{
+						Close();
+						return;
+					}
+				}
+			}
+
+			string result = "";
+			System.IO.StreamReader sr = new System.IO.StreamReader(levelEditorFileName);
+			result = sr.ReadToEnd();
+			sr.Close();
+
+			Settings = JsonConvert.DeserializeObject<SerializedSettings>(result);
+
 			CreatePlayer();
 		}
 
@@ -108,6 +138,8 @@ namespace LevelEditor
 				{
 					float.TryParse(xTextBox.Text, out sPlayer.x);
 					float.TryParse(yTextBox.Text, out sPlayer.y);
+					float.TryParse(wTextBox.Text, out sPlayer.width);
+					float.TryParse(hTextBox.Text, out sPlayer.height);
 
 					playerRectangle.Width = sPlayer.width;
 					playerRectangle.Height = sPlayer.height;
@@ -176,7 +208,7 @@ namespace LevelEditor
 				}
 
 				ArtImage image = GetArtImage(selected_image_name);
-				if (image != null)
+				if (image != null && image.IsStandalone)
 				{
 					float.TryParse(xTextBox.Text, out image.x);
 					float.TryParse(yTextBox.Text, out image.y);
@@ -584,8 +616,8 @@ namespace LevelEditor
 			{
 				Stroke = TransformingColor,
 				StrokeThickness = 2,
-				Width = 10.0f,
-				Height = 10.0f
+				Width = 6.0f,
+				Height = 12.0f
 			};
 
 			string name = "Player 0";
@@ -697,8 +729,8 @@ namespace LevelEditor
 				yTextBox.Text = sPlayer.y.ToString();
 				wTextBox.Text = sPlayer.width.ToString();
 				hTextBox.Text = sPlayer.height.ToString();
-				wTextBox.IsEnabled = false;
-				hTextBox.IsEnabled = false;
+				wTextBox.IsEnabled = true;
+				hTextBox.IsEnabled = true;
 				TriangleCheckBox.IsEnabled = false;
 
 				HideTriangleUiItems();
@@ -1239,6 +1271,7 @@ namespace LevelEditor
 		{
 			string result = "";
 			OpenFileDialog openFileDialog = new OpenFileDialog();
+			openFileDialog.InitialDirectory = Settings.root_directory;
 
 			openFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
 			openFileDialog.FilterIndex = 2;
@@ -1729,6 +1762,7 @@ namespace LevelEditor
 		private void ImportBestiaryButton_Click(object sender, RoutedEventArgs e)
 		{
 			OpenFileDialog openFileDialog = new OpenFileDialog();
+			openFileDialog.InitialDirectory = Settings.root_directory;
 
 			openFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
 			openFileDialog.FilterIndex = 2;
@@ -1752,7 +1786,7 @@ namespace LevelEditor
 		{
 			string result = "";
 
-			System.IO.StreamReader sr = new System.IO.StreamReader(filepath);
+			System.IO.StreamReader sr = new System.IO.StreamReader(Settings.root_directory + filepath);
 
 			result = sr.ReadToEnd();
 
@@ -1773,18 +1807,25 @@ namespace LevelEditor
 
 				Bestiaries.Add(newBestiary);
 
-				if (!ImportedBestiariesFilePaths.Contains(filepath))
+				string rootDirRelativeFilePathForSaving = filepath;
+				if (filepath.Contains(Settings.root_directory))
 				{
-					ImportedBestiariesFilePaths.Add(filepath);
+					rootDirRelativeFilePathForSaving = filepath.Remove(0, Settings.root_directory.Length);
+				}
+
+				if (!ImportedBestiariesFilePaths.Contains(rootDirRelativeFilePathForSaving))
+				{
+					ImportedBestiariesFilePaths.Add(rootDirRelativeFilePathForSaving);
 				}
 
 				isDataDirty = false;
 			}
 		}
 
-		private void AddImage_Click(object sender, RoutedEventArgs e)
+		private void AddImageToObject_Click(object sender, RoutedEventArgs e)
 		{
 			OpenFileDialog openFileDialog = new OpenFileDialog();
+			openFileDialog.InitialDirectory = Settings.root_directory;
 
 			openFileDialog.Filter = "png files (*.png)|*.png|All files (*.*)|*.*";
 			openFileDialog.FilterIndex = 2;
@@ -1794,13 +1835,36 @@ namespace LevelEditor
 			{
 				if (!string.IsNullOrWhiteSpace(openFileDialog.FileName))
 				{
-					CreateArtImage(openFileDialog.FileName);
+					CreateArtImage(openFileDialog.FileName, true);
 				}
 			}
 		}
 
-		public void CreateArtImage(string file_path_and_name)
+		private void AddImage_Click(object sender, RoutedEventArgs e)
 		{
+			OpenFileDialog openFileDialog = new OpenFileDialog();
+			openFileDialog.InitialDirectory = Settings.root_directory;
+
+			openFileDialog.Filter = "png files (*.png)|*.png|All files (*.*)|*.*";
+			openFileDialog.FilterIndex = 2;
+			openFileDialog.RestoreDirectory = true;
+
+			if (openFileDialog.ShowDialog() == true)
+			{
+				if (!string.IsNullOrWhiteSpace(openFileDialog.FileName))
+				{
+					CreateArtImage(openFileDialog.FileName, false);
+				}
+			}
+		}
+
+		public void CreateArtImage(string file_path_and_name, bool tie_to_selected_object)
+		{
+			if (playerRectSelected || selected_triangle_name != "" || selected_unit_name != "" || selected_trigger_name != "")
+			{
+				return;
+			}
+
 			BitmapImage bitmap = new BitmapImage(new Uri(file_path_and_name, UriKind.Absolute));
 			Image image = new Image();
 			image.Source = bitmap;
@@ -1808,16 +1872,33 @@ namespace LevelEditor
 			image.Width = bitmap.PixelWidth / 6.0;
 
 			ArtImage newArtImage = new ArtImage();
+
+			if (file_path_and_name.Contains(Settings.root_directory))
+			{
+				file_path_and_name = file_path_and_name.Remove(0, Settings.root_directory.Length);
+			}
 			newArtImage.FilePath = file_path_and_name;
 
 			float left = 0.0f;
 			float top = 0.0f;
 
-			SerializedRectangle srect = GetSerializedRect(selected_rect_name);
-			if (srect != null)
+			if (tie_to_selected_object)
 			{
-				left = srect.x;
-				top = srect.y;
+				SerializedRectangle sRect = GetSerializedRect(selected_rect_name);
+				if (sRect != null)
+				{
+					left = sRect.x + (sRect.width / 2.0f) - ((float)image.Width / 2.0f);
+					top = sRect.y + (sRect.height / 2.0f) - ((float)image.Height / 2.0f);
+					sRect.TiedArtImageFileName = newArtImage.FilePath;
+				}
+
+				SerializedDoor sDoor = GetSerializedDoor(selected_door_name);
+				if (sDoor != null)
+				{
+					left = sDoor.x + (sDoor.width / 2.0f) - ((float)image.Width / 2.0f);
+					top = sDoor.y + (sDoor.height / 2.0f) - ((float)image.Height / 2.0f);
+					sDoor.TiedArtImageFileName = newArtImage.FilePath;
+				}
 			}
 
 			newArtImage.x = left;
@@ -1825,6 +1906,7 @@ namespace LevelEditor
 			newArtImage.PixelWidth = bitmap.PixelWidth;
 			newArtImage.PixelHeight = bitmap.PixelHeight;
 			newArtImage.image = image;
+			newArtImage.IsStandalone = !tie_to_selected_object;
 			Canvas.SetLeft(image, newArtImage.x);
 			Canvas.SetTop(image, newArtImage.y);
 
@@ -1851,7 +1933,7 @@ namespace LevelEditor
 
 		public void LoadArtImage(ArtImage art_image)
 		{
-			BitmapImage bitmap = new BitmapImage(new Uri(art_image.FilePath, UriKind.Absolute));
+			BitmapImage bitmap = new BitmapImage(new Uri(Settings.root_directory + art_image.FilePath, UriKind.Absolute));
 
 			Image image = new Image();
 			image.Source = bitmap;
@@ -1891,6 +1973,7 @@ namespace LevelEditor
 		private void AddParallaxingBackground_Click(object sender, RoutedEventArgs e)
 		{
 			OpenFileDialog openFileDialog = new OpenFileDialog();
+			openFileDialog.InitialDirectory = Settings.root_directory;
 
 			openFileDialog.Filter = "png files (*.png)|*.png|All files (*.*)|*.*";
 			openFileDialog.FilterIndex = 2;
@@ -1914,6 +1997,12 @@ namespace LevelEditor
 			image.Width = bitmap.PixelWidth;
 
 			ParallaxingBackground newParallaxingBackground = new ParallaxingBackground();
+
+			if (file_path_and_name.Contains(Settings.root_directory))
+			{
+				file_path_and_name = file_path_and_name.Remove(0, Settings.root_directory.Length);
+			}
+
 			newParallaxingBackground.FilePath = file_path_and_name;
 
 			float left = 0.0f;
@@ -1950,7 +2039,7 @@ namespace LevelEditor
 
 		public void LoadParallaxingBackground(ParallaxingBackground parallaxing_background)
 		{
-			BitmapImage bitmap = new BitmapImage(new Uri(parallaxing_background.FilePath, UriKind.Absolute));
+			BitmapImage bitmap = new BitmapImage(new Uri(Settings.root_directory + parallaxing_background.FilePath, UriKind.Absolute));
 
 			Image image = new Image();
 			image.Source = bitmap;
@@ -2007,6 +2096,131 @@ namespace LevelEditor
 				Canvas.SetTop(selected_triangle, 0.0f);
 			}
 		}
+
+		private void SetRootDirectory_Click(object sender, RoutedEventArgs e)
+		{
+			SetRootDirectory();
+		}
+
+		private void SetRootDirectory()
+		{
+			using (var fbd = new System.Windows.Forms.FolderBrowserDialog())
+			{
+				if (Settings.root_directory != "")
+				{
+					fbd.SelectedPath = Settings.root_directory;
+				}
+
+				fbd.Description = "Please select a folder to act as your root folder.";
+				System.Windows.Forms.DialogResult result = fbd.ShowDialog();
+
+				if (result == System.Windows.Forms.DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
+				{
+					Settings.root_directory = fbd.SelectedPath;
+					System.Windows.Forms.MessageBox.Show("Root File Path: " + fbd.SelectedPath, "Message");
+
+					StreamWriter writer = new StreamWriter(levelEditorFileName);
+
+					string jsonStr = JsonConvert.SerializeObject(Settings);
+
+					writer.Write(jsonStr);
+					writer.Flush();
+
+					writer.Close();
+				}
+			}
+		}
+
+		private void New_Click(object sender, RoutedEventArgs e)
+		{
+			string msg = "Any unsaved progress will be lost.  Do you wish to proceed?";
+			MessageBoxResult yesOrNoResult =
+			  MessageBox.Show(
+				msg,
+				"Data App",
+				MessageBoxButton.YesNo,
+				MessageBoxImage.Warning);
+			if (yesOrNoResult == MessageBoxResult.Yes || yesOrNoResult == MessageBoxResult.OK)
+			{
+				Reset();
+			}
+		}
+
+		private void Reset()
+		{
+			mouse_pressed_pos = new Point();
+
+			triangle_getting_drawn = null;
+
+			//Polygon triangle_getting_made = null;
+			triangles = new Dictionary<string, Polygon>();
+			sTris = new List<SerializedTriangle>();
+			selected_triangle = null;
+			selected_triangle_name = "";
+
+			rect_getting_drawn = null;
+
+			selected_rectangle = null;
+			rectangles = new Dictionary<string, Rectangle>();
+			sRects = new List<SerializedRectangle>();
+			selected_rect_name = "";
+
+			selected_door = null;
+			door_rects = new Dictionary<string, Rectangle>();
+			sDoors = new List<SerializedDoor>();
+			selected_door_name = "";
+
+			sPlayer = new SerializedPlayer();
+			playerRectangle = null;
+			playerRectSelected = false;
+
+			ImportedBestiariesFilePaths = new List<string>();
+			Bestiaries = new List<Bestiary>();
+
+			//Unit selected_unit = null;
+			selected_unit_rectangle = null;
+			unit_rects = new Dictionary<string, Rectangle>();
+			sUnits = new List<SerializedUnit>();
+			selected_unit_name = "";
+
+			selected_trigger = null;
+			trigger_rects = new Dictionary<string, Rectangle>();
+			sTriggers = new List<SerializedTrigger>();
+			selected_trigger_name = "";
+
+			selected_image = null;
+			bitmap = new List<BitmapImage>();
+			artImages = new List<ArtImage>();
+			selected_image_name = "";
+
+			selected_parallaxing_background = null;
+			parallaxing_background_bitmaps = new List<BitmapImage>();
+			parallaxingBackgrounds = new List<ParallaxingBackground>();
+			selected_parallaxing_background_name = "";
+
+			MyCanvas.Children.Clear();
+			ListOfObjects.Items.Clear();
+			ListOfObjectTypes.Items.Clear();
+			ListOfParallaxingBackgrounds.Items.Clear();
+
+			ListBoxItem rectangleItem = new ListBoxItem();
+			rectangleItem.Content = "Rectangle";
+			ListOfObjectTypes.Items.Add(rectangleItem);
+
+			ListBoxItem triangleItem = new ListBoxItem();
+			triangleItem.Content = "Triangle";
+			ListOfObjectTypes.Items.Add(triangleItem);
+
+			ListBoxItem doorItem = new ListBoxItem();
+			doorItem.Content = "Door";
+			ListOfObjectTypes.Items.Add(doorItem);
+
+			ListBoxItem triggerItem = new ListBoxItem();
+			triggerItem.Content = "Trigger";
+			ListOfObjectTypes.Items.Add(triggerItem);
+
+			CreatePlayer();
+		}
 	}
 
 	public class SerializedObject
@@ -2028,6 +2242,7 @@ namespace LevelEditor
 		public float vel_x;
 		public float vel_y;
 		public bool pass_through;
+		public string TiedArtImageFileName;
 
 		public SerializedRectangle()
 		{
@@ -2138,6 +2353,7 @@ namespace LevelEditor
 		public float y;
 		public float PixelWidth;
 		public float PixelHeight;
+		public bool IsStandalone;
 		[JsonIgnore]
 		public Image image;
 
@@ -2158,6 +2374,15 @@ namespace LevelEditor
 		public Image image;
 
 		public ParallaxingBackground()
+		{
+		}
+	}
+
+	public class SerializedSettings
+	{
+		public string root_directory = "";
+
+		public SerializedSettings()
 		{
 		}
 	}
