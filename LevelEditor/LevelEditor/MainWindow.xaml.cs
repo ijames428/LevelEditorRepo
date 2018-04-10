@@ -82,10 +82,7 @@ namespace LevelEditor
 		List<ArtImage> artImages = new List<ArtImage>();
 		string selected_image_name = "";
 
-		ParallaxingBackground selected_parallaxing_background = null;
-		List<BitmapImage> parallaxing_background_bitmaps = new List<BitmapImage>();
-		List<ParallaxingBackground> parallaxingBackgrounds = new List<ParallaxingBackground>();
-		string selected_parallaxing_background_name = "";
+		List<Zone> zones = new List<Zone>();
 
 		public MainWindow()
 		{
@@ -126,6 +123,8 @@ namespace LevelEditor
 			sr.Close();
 
 			Settings = JsonConvert.DeserializeObject<SerializedSettings>(result);
+
+			zones.Add(new Zone("Zone 1"));
 
 			CreatePlayer();
 		}
@@ -250,6 +249,31 @@ namespace LevelEditor
 
 					Canvas.SetLeft(selected_triangle, 0.0f);
 					Canvas.SetTop(selected_triangle, 0.0f);
+				}
+			}
+			else if (xZoneTextBox.IsFocused || yZoneTextBox.IsFocused)
+			{
+				Zone zone = GetCurrentSelectedZone();
+				if (zone != null)
+				{
+					if (xZoneTextBox.IsFocused)
+					{
+						float new_x;
+						float.TryParse(xZoneTextBox.Text, out new_x);
+						if (zone.x != new_x)
+						{
+							zone.x = new_x;
+						}
+					}
+					else if (yZoneTextBox.IsFocused)
+					{
+						float new_y;
+						float.TryParse(yZoneTextBox.Text, out new_y);
+						if (zone.y != new_y)
+						{
+							zone.y = new_y;
+						}
+					}
 				}
 			}
 		}
@@ -818,22 +842,19 @@ namespace LevelEditor
 			{
 				DeleteButton.IsEnabled = true;
 
-				selected_parallaxing_background_name = name;
+				Zone zone = GetCurrentSelectedZone();
+				if (zone != null)
+				{
+					xZoneTextBox.Text = zone.x.ToString();
+					yZoneTextBox.Text = zone.y.ToString();
+					TriangleCheckBox.IsEnabled = false;
 
-				ParallaxingBackground parallaxing_background = GetParallaxingBackground(name);
-				selected_parallaxing_background = parallaxing_background;
-
-				xTextBox.Text = "";
-				yTextBox.Text = "";
-				wTextBox.Text = "";
-				hTextBox.Text = "";
-				TriangleCheckBox.IsEnabled = false;
-
-				HideTriangleUiItems();
-				HideUnitUiItems();
-				HideDoorUiItems();
-				HideTriggerUiItems();
-				ShowRectangleUiItems();
+					HideTriangleUiItems();
+					HideUnitUiItems();
+					HideDoorUiItems();
+					HideTriggerUiItems();
+					ShowRectangleUiItems();
+				}
 			}
 			else
 			{
@@ -927,8 +948,8 @@ namespace LevelEditor
 			selected_image_name = "";
 			selected_image = null;
 
-			selected_parallaxing_background_name = "";
-			selected_parallaxing_background = null;
+			//selected_parallaxing_background_name = "";
+			//selected_parallaxing_background = null;
 
 			xTextBox.Text = "";
 			yTextBox.Text = "";
@@ -1208,21 +1229,26 @@ namespace LevelEditor
 				}
 			}
 
-			ParallaxingBackground parallaxing_background = GetParallaxingBackground(selected_parallaxing_background_name);
-			if (parallaxing_background != null)
+			Zone zone = GetCurrentSelectedZone();
+			if (zone != null)
 			{
-				isDataDirty = true;
-				parallaxingBackgrounds.Remove(parallaxing_background);
-				MyCanvas.Children.Remove(parallaxing_background.image);
-
-				for (int i = 0; i < ListOfParallaxingBackgrounds.Items.Count; i++)
+				ParallaxingBackground parallaxing_background = zone.GetCurrentlySelectedParallaxingBackground();
+				if (parallaxing_background != null)
 				{
-					ListBoxItem item = (ListBoxItem)ListOfParallaxingBackgrounds.Items[i];
+					isDataDirty = true;
+					zone.ParallaxingBackgrounds.Remove(parallaxing_background);
+					MyCanvas.Children.Remove(parallaxing_background.image);
 
-					if (item.Content.ToString() == selected_parallaxing_background_name)
+					for (int i = 0; i < zone.ZonesListOfParallaxingBackgrounds.Count; i++)
 					{
-						ListOfParallaxingBackgrounds.Items.Remove(ListOfParallaxingBackgrounds.Items[i]);
-						break;
+						ListBoxItem item = (ListBoxItem)zone.ZonesListOfParallaxingBackgrounds[i];
+
+						if (item.Content.ToString() == parallaxing_background.name)
+						{
+							zone.ZonesListOfParallaxingBackgrounds.Remove(zone.ZonesListOfParallaxingBackgrounds[i]);
+							ListOfParallaxingBackgrounds.Items.Remove(zone.ZonesListOfParallaxingBackgrounds[i]);
+							break;
+						}
 					}
 				}
 			}
@@ -1239,16 +1265,16 @@ namespace LevelEditor
 			sObjects.bestiaryFilePaths = ImportedBestiariesFilePaths;
 			sObjects.units = sUnits;
 			sObjects.images = artImages;
-			sObjects.parallaxingBackgrounds = parallaxingBackgrounds;
+			sObjects.zones = zones;
+			//sObjects.parallaxingBackgrounds = parallaxingBackgrounds;
 
 			string jsonStr = JsonConvert.SerializeObject(sObjects);
 
 			Stream myStream;
 			SaveFileDialog saveFileDialog = new SaveFileDialog();
-
+			saveFileDialog.InitialDirectory = Settings.root_directory;
 			saveFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
 			saveFileDialog.FilterIndex = 2;
-			saveFileDialog.RestoreDirectory = true;
 
 			if (saveFileDialog.ShowDialog() == true)
 			{
@@ -1298,7 +1324,8 @@ namespace LevelEditor
 				ImportedBestiariesFilePaths = sObjects.bestiaryFilePaths;
 				sUnits = sObjects.units;
 				artImages = sObjects.images;
-				parallaxingBackgrounds = sObjects.parallaxingBackgrounds;
+				zones = sObjects.zones;
+				//parallaxingBackgrounds = sObjects.parallaxingBackgrounds;
 
 				rectangles.Clear();
 				triangles.Clear();
@@ -1462,17 +1489,18 @@ namespace LevelEditor
 					LoadArtImage(artImages[i]);
 				}
 
-				if (parallaxingBackgrounds != null)
+				if (zones != null)
 				{
-					for (int i = 0; i < parallaxingBackgrounds.Count(); i++)
+					for (int zone_index = 0; zone_index < zones.Count(); zone_index++)
 					{
-						LoadParallaxingBackground(parallaxingBackgrounds[i]);
+						for (int i = 0; i < zones[zone_index].ParallaxingBackgrounds.Count(); i++)
+						{
+							LoadParallaxingBackground(zones[zone_index].ParallaxingBackgrounds[i], zones[zone_index]);
+						}
 					}
 				}
-				else
-				{
-					parallaxingBackgrounds = new List<ParallaxingBackground>();
-				}
+
+				ResetParallaxingBackgroundsComboxBox();
 
 				ImportBestiaries();
 
@@ -1494,18 +1522,22 @@ namespace LevelEditor
 			return null;
 		}
 
-		private ParallaxingBackground GetParallaxingBackground(string name)
-		{
-			for (int i = 0; i < parallaxingBackgrounds.Count; i++)
-			{
-				if (name == parallaxingBackgrounds[i].name)
-				{
-					return parallaxingBackgrounds[i];
-				}
-			}
-
-			return null;
-		}
+		//private ParallaxingBackground GetParallaxingBackground(string name)
+		//{
+		//	Zone zone = GetCurrentSelectedZone();
+		//	if (zone != null)
+		//	{
+		//		for (int i = 0; i < zone.ParallaxingBackgrounds.Count; i++)
+		//		{
+		//			if (name == zone.ParallaxingBackgrounds[i].name)
+		//			{
+		//				return zone.ParallaxingBackgrounds[i];
+		//			}
+		//		}
+		//	}
+		//
+		//	return null;
+		//}
 
 		private SerializedRectangle GetSerializedRect(string name)
 		{
@@ -1860,7 +1892,7 @@ namespace LevelEditor
 
 		public void CreateArtImage(string file_path_and_name, bool tie_to_selected_object)
 		{
-			if (playerRectSelected || selected_triangle_name != "" || selected_unit_name != "" || selected_trigger_name != "")
+			if (tie_to_selected_object && (playerRectSelected || selected_triangle_name != "" || selected_unit_name != "" || selected_trigger_name != ""))
 			{
 				return;
 			}
@@ -1990,54 +2022,59 @@ namespace LevelEditor
 
 		public void CreateParallaxingBackground(string file_path_and_name)
 		{
-			BitmapImage bitmap = new BitmapImage(new Uri(file_path_and_name, UriKind.Absolute));
-			Image image = new Image();
-			image.Source = bitmap;
-			image.Height = bitmap.PixelHeight;
-			image.Width = bitmap.PixelWidth;
-
-			ParallaxingBackground newParallaxingBackground = new ParallaxingBackground();
-
-			if (file_path_and_name.Contains(Settings.root_directory))
+			Zone zone = GetCurrentSelectedZone();
+			if (zone != null)
 			{
-				file_path_and_name = file_path_and_name.Remove(0, Settings.root_directory.Length);
+				BitmapImage bitmap = new BitmapImage(new Uri(file_path_and_name, UriKind.Absolute));
+				Image image = new Image();
+				image.Source = bitmap;
+				image.Height = bitmap.PixelHeight;
+				image.Width = bitmap.PixelWidth;
+
+				ParallaxingBackground newParallaxingBackground = new ParallaxingBackground();
+
+				if (file_path_and_name.Contains(Settings.root_directory))
+				{
+					file_path_and_name = file_path_and_name.Remove(0, Settings.root_directory.Length);
+				}
+
+				newParallaxingBackground.FilePath = file_path_and_name;
+
+				float left = zone.x;
+				float top = zone.y;
+
+				newParallaxingBackground.image = image;
+				newParallaxingBackground.x = left;
+				newParallaxingBackground.y = top;
+				newParallaxingBackground.PixelWidth = bitmap.PixelWidth;
+				newParallaxingBackground.PixelHeight = bitmap.PixelHeight;
+				Canvas.SetLeft(image, newParallaxingBackground.x);
+				Canvas.SetTop(image, newParallaxingBackground.y);
+
+				//int item_index = 0;
+				string name = "Layer " + zone.ZonesListOfParallaxingBackgrounds.Count;
+
+				//while (GetParallaxingBackground(name) != null)
+				//{
+				//	item_index++;
+				//	name = "Layer " + item_index;
+				//}
+
+				newParallaxingBackground.name = name;
+
+				ListBoxItem item = new ListBoxItem();
+				item.Content = name;
+				item.Selected += OnSelected;
+				item.Unselected += OnUnselected;
+				ListOfParallaxingBackgrounds.Items.Add(item);
+				zone.ZonesListOfParallaxingBackgrounds.Add(item);
+
+				zone.ParallaxingBackgrounds.Add(newParallaxingBackground);
+				MyCanvas.Children.Insert(0, image);
 			}
-
-			newParallaxingBackground.FilePath = file_path_and_name;
-
-			float left = 0.0f;
-			float top = 0.0f;
-
-			newParallaxingBackground.x = left;
-			newParallaxingBackground.y = top;
-			newParallaxingBackground.PixelWidth = bitmap.PixelWidth;
-			newParallaxingBackground.PixelHeight = bitmap.PixelHeight;
-			newParallaxingBackground.image = image;
-			Canvas.SetLeft(image, newParallaxingBackground.x);
-			Canvas.SetTop(image, newParallaxingBackground.y);
-
-			int item_index = 0;
-			string name = "Layer " + ListOfParallaxingBackgrounds.Items.Count;
-
-			while (GetParallaxingBackground(name) != null)
-			{
-				item_index++;
-				name = "Layer " + item_index;
-			}
-
-			newParallaxingBackground.name = name;
-
-			ListBoxItem item = new ListBoxItem();
-			item.Content = name;
-			item.Selected += OnSelected;
-			item.Unselected += OnUnselected;
-			ListOfParallaxingBackgrounds.Items.Add(item);
-
-			parallaxingBackgrounds.Add(newParallaxingBackground);
-			MyCanvas.Children.Insert(0, image);
 		}
 
-		public void LoadParallaxingBackground(ParallaxingBackground parallaxing_background)
+		public void LoadParallaxingBackground(ParallaxingBackground parallaxing_background, Zone zone)
 		{
 			BitmapImage bitmap = new BitmapImage(new Uri(Settings.root_directory + parallaxing_background.FilePath, UriKind.Absolute));
 
@@ -2057,15 +2094,7 @@ namespace LevelEditor
 
 			if (string.IsNullOrWhiteSpace(parallaxing_background.name))
 			{
-				int item_index = 0;
-				string name = "Layer " + ListOfParallaxingBackgrounds.Items.Count;
-
-				while (GetArtImage(name) != null)
-				{
-					item_index++;
-					name = "Layer " + item_index;
-				}
-
+				string name = "Layer " + zone.ZonesListOfParallaxingBackgrounds.Count;
 				parallaxing_background.name = name;
 			}
 
@@ -2073,7 +2102,7 @@ namespace LevelEditor
 			item.Content = parallaxing_background.name;
 			item.Selected += OnSelected;
 			item.Unselected += OnUnselected;
-			ListOfParallaxingBackgrounds.Items.Add(item);
+			zone.ZonesListOfParallaxingBackgrounds.Add(item);
 		}
 
 		private void TriangleCheckBox_Click(object sender, RoutedEventArgs e)
@@ -2193,10 +2222,10 @@ namespace LevelEditor
 			artImages = new List<ArtImage>();
 			selected_image_name = "";
 
-			selected_parallaxing_background = null;
-			parallaxing_background_bitmaps = new List<BitmapImage>();
-			parallaxingBackgrounds = new List<ParallaxingBackground>();
-			selected_parallaxing_background_name = "";
+			//selected_parallaxing_background = null;
+			//parallaxing_background_bitmaps = new List<BitmapImage>();
+			//parallaxingBackgrounds = new List<ParallaxingBackground>();
+			//selected_parallaxing_background_name = "";
 
 			MyCanvas.Children.Clear();
 			ListOfObjects.Items.Clear();
@@ -2220,6 +2249,54 @@ namespace LevelEditor
 			ListOfObjectTypes.Items.Add(triggerItem);
 
 			CreatePlayer();
+		}
+
+		private void ZonesComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+		{
+			if (ZonesComboBox.SelectedValue == null) { return; }
+
+			string name = ZonesComboBox.SelectedValue.ToString();
+			if (name == "--New--")
+			{
+				string zone_name = "Zone " + ZonesComboBox.Items.Count;
+
+				ComboBoxItem new_combo_box_item = new ComboBoxItem();
+				new_combo_box_item.Content = zone_name;
+				new_combo_box_item.IsSelected = true;
+
+				ZonesComboBox.Items.Insert(ZonesComboBox.Items.Count - 1, new_combo_box_item);
+
+				zones.Add(new Zone(zone_name));
+			}
+
+			ResetParallaxingBackgroundsComboxBox();
+		}
+
+		private void ResetParallaxingBackgroundsComboxBox()
+		{
+			Zone zone = GetCurrentSelectedZone();
+			if (zone != null)
+			{
+				ListOfParallaxingBackgrounds.Items.Clear();
+
+				foreach (var item in zone.ZonesListOfParallaxingBackgrounds)
+				{
+					ListOfParallaxingBackgrounds.Items.Add(item);
+				}
+			}
+		}
+
+		private Zone GetCurrentSelectedZone()
+		{
+			foreach (Zone zone in zones)
+			{
+				if (zone.Name == ZonesComboBox.SelectedValue.ToString())
+				{
+					return zone;
+				}
+			}
+
+			return null;
 		}
 	}
 
@@ -2294,7 +2371,8 @@ namespace LevelEditor
 		public List<string> bestiaryFilePaths;
 		public List<SerializedUnit> units;
 		public List<ArtImage> images;
-		public List<ParallaxingBackground> parallaxingBackgrounds;
+		public List<Zone> zones;
+		//public List<ParallaxingBackground> parallaxingBackgrounds;
 
 		public SerializedObjects()
 		{
@@ -2366,8 +2444,38 @@ namespace LevelEditor
 	{
 		public string name = "";
 		public string FilePath = "";
-		public float x;
-		public float y;
+		private float _x = 0.0f;
+		public float x
+		{
+			get
+			{
+				return _x;
+			}
+			set
+			{
+				_x = value;
+				if (image != null)
+				{
+					Canvas.SetLeft(image, _x);
+				}
+			}
+		}
+		private float _y = 0.0f;
+		public float y
+		{
+			get
+			{
+				return _y;
+			}
+			set
+			{
+				_y = value;
+				if (image != null)
+				{
+					Canvas.SetLeft(image, _y);
+				}
+			}
+		}
 		public float PixelWidth;
 		public float PixelHeight;
 		[JsonIgnore]
@@ -2375,6 +2483,71 @@ namespace LevelEditor
 
 		public ParallaxingBackground()
 		{
+		}
+	}
+
+	public class Zone
+	{
+		public string Name = "";
+		[JsonIgnore]
+		public List<ListBoxItem> ZonesListOfParallaxingBackgrounds = new List<ListBoxItem>();
+		public List<ParallaxingBackground> ParallaxingBackgrounds = new List<ParallaxingBackground>();
+		private float _x = 0.0f;
+		public float x {
+			get
+			{
+				return _x;
+			}
+			set
+			{
+				_x = value;
+				foreach (ParallaxingBackground pb in ParallaxingBackgrounds)
+				{
+					pb.x = _x;
+				}
+			}
+		}
+		private float _y = 0.0f;
+		public float y
+		{
+			get
+			{
+				return _y;
+			}
+			set
+			{
+				_y = value;
+				foreach (ParallaxingBackground pb in ParallaxingBackgrounds)
+				{
+					pb.y = _y;
+				}
+			}
+		}
+
+		public Zone(string name)
+		{
+			Name = name;
+			x = 0.0f;
+			y = 0.0f;
+		}
+
+		public ParallaxingBackground GetCurrentlySelectedParallaxingBackground()
+		{
+			foreach (var item in ZonesListOfParallaxingBackgrounds)
+			{
+				if (((ListBoxItem)item).IsSelected)
+				{
+					foreach (ParallaxingBackground pb in ParallaxingBackgrounds)
+					{
+						if (pb.name == ((ListBoxItem)item).Content.ToString())
+						{
+							return pb;
+						}
+					}
+				}
+			}
+
+			return null;
 		}
 	}
 

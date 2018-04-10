@@ -45,8 +45,18 @@
 
 			<Label Background="White" FontWeight="Bold" HorizontalContentAlignment="Center" Canvas.Right="1" Width="200" Canvas.Top="222">Objects</Label>
 			<ListBox Name="ListOfObjects" Canvas.Right="1" Canvas.Top="246" Height="300" Width="200"></ListBox>
-			<Label Background="White" FontWeight="Bold" HorizontalContentAlignment="Center" Canvas.Right="1" Width="200" Canvas.Top="770">Parrallaxing Backgrounds</Label>
-			<ListBox Name="ListOfParallaxingBackgrounds" Canvas.Right="1" Canvas.Top="796" Height="100" Width="200"></ListBox>
+
+			<ComboBox Name="ZonesComboBox" SelectedValuePath="Content" Canvas.Right="136" Canvas.Top="770" Width="65" SelectionChanged="ZonesComboBox_SelectionChanged">
+				<ComboBoxItem IsSelected="True">Zone 1</ComboBoxItem>
+				<ComboBoxItem>--New--</ComboBoxItem>
+			</ComboBox>
+			<Label Name="xZoneLabel" Canvas.Right="99" Canvas.Top="768">X:</Label>
+			<TextBox Name="xZoneTextBox" Canvas.Right="65" Canvas.Top="772" Width="35"></TextBox>
+			<Label Name="yZoneLabel" Canvas.Right="35" Canvas.Top="768">Y:</Label>
+			<TextBox Name="yZoneTextBox" Canvas.Right="1" Canvas.Top="772" Width="35"></TextBox>
+
+			<Label Background="White" FontWeight="Bold" HorizontalContentAlignment="Center" Canvas.Right="1" Width="200" Canvas.Top="792">Parrallaxing Backgrounds</Label>
+			<ListBox Name="ListOfParallaxingBackgrounds" Canvas.Right="1" Canvas.Top="818" Height="100" Width="200"></ListBox>
 			<!--ComboBox Name="ShapeSelection" Canvas.Right="1">
 				<ComboBoxItem IsSelected="True">1 - Rectangle</ComboBoxItem>
 				<ComboBoxItem>2 - Triangle</ComboBoxItem>
