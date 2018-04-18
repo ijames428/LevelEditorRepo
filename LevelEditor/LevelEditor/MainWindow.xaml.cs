@@ -1818,6 +1818,11 @@ namespace LevelEditor
 		{
 			string result = "";
 
+			if (filepath.Contains(Settings.root_directory))
+			{
+				filepath = filepath.Remove(0, Settings.root_directory.Length);
+			}
+
 			System.IO.StreamReader sr = new System.IO.StreamReader(Settings.root_directory + filepath);
 
 			result = sr.ReadToEnd();
