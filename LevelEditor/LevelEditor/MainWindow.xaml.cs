@@ -131,7 +131,7 @@ namespace LevelEditor
 
 		private void Update(object sender, EventArgs e)
 		{
-			if (xTextBox.IsFocused || yTextBox.IsFocused || wTextBox.IsFocused || hTextBox.IsFocused || activityTextBox.IsFocused || velocityXTextBox.IsFocused || velocityYTextBox.IsFocused || PassThroughCheckBox.IsFocused || IsInteractableCheckBox.IsFocused)
+			if (xTextBox.IsFocused || yTextBox.IsFocused || wTextBox.IsFocused || hTextBox.IsFocused || activityTextBox.IsFocused || velocityXTextBox.IsFocused || velocityYTextBox.IsFocused || PassThroughCheckBox.IsFocused)
 			{
 				if (playerRectSelected)
 				{
@@ -184,8 +184,6 @@ namespace LevelEditor
 					float.TryParse(yTextBox.Text, out sUnit.LevelLocationY);
 					sUnit.activity = activityTextBox.Text;
 
-					sUnit.IsInteractable = IsInteractableCheckBox.IsChecked.HasValue ? IsInteractableCheckBox.IsChecked.Value : false;
-
 					Canvas.SetLeft(selected_unit_rectangle, sUnit.LevelLocationX);
 					Canvas.SetTop(selected_unit_rectangle, sUnit.LevelLocationY);
 				}
@@ -216,6 +214,15 @@ namespace LevelEditor
 
 					Canvas.SetLeft(image.image, image.x);
 					Canvas.SetTop(image.image, image.y);
+				}
+			}
+			else if (IsInteractableCheckBox.IsFocused || IsDestructibleCheckBox.IsFocused)
+			{
+				SerializedUnit sUnit = GetSerializedUnit(selected_unit_name);
+				if (sUnit != null)
+				{
+					sUnit.IsInteractable = IsInteractableCheckBox.IsChecked.HasValue ? IsInteractableCheckBox.IsChecked.Value : false;
+					sUnit.IsDestructible = IsDestructibleCheckBox.IsChecked.HasValue ? IsDestructibleCheckBox.IsChecked.Value : false;
 				}
 			}
 			else if (p1xTextBox.IsFocused || p1yTextBox.IsFocused || p2xTextBox.IsFocused || p2yTextBox.IsFocused)
@@ -573,6 +580,7 @@ namespace LevelEditor
 			sUnit.width = (float)rect_getting_drawn.Width;
 			sUnit.height = (float)rect_getting_drawn.Height;
 			sUnit.IsInteractable = false;
+			sUnit.IsDestructible = false;
 
 			sUnits.Add(sUnit);
 
@@ -880,6 +888,9 @@ namespace LevelEditor
 				IsInteractableCheckBox.IsEnabled = true;
 				IsInteractableCheckBox.IsChecked = unit.IsInteractable;
 
+				IsDestructibleCheckBox.IsEnabled = true;
+				IsDestructibleCheckBox.IsChecked = unit.IsDestructible;
+
 				HideTriangleUiItems();
 				HideDoorUiItems();
 				HideRectangleUiItems();
@@ -1062,6 +1073,7 @@ namespace LevelEditor
 				sUnit.activity = activityTextBox.Text;
 
 				sUnit.IsInteractable = IsInteractableCheckBox.IsChecked.HasValue ? IsInteractableCheckBox.IsChecked.Value : false;
+				sUnit.IsDestructible = IsDestructibleCheckBox.IsChecked.HasValue ? IsDestructibleCheckBox.IsChecked.Value : false;
 
 				MyCanvas.Children.Remove(selected_unit_rectangle);
 
@@ -1493,6 +1505,12 @@ namespace LevelEditor
 				{
 					for (int zone_index = 0; zone_index < zones.Count(); zone_index++)
 					{
+						if (zone_index == 0)
+						{
+							xZoneTextBox.Text = zones[0].x.ToString();
+							yZoneTextBox.Text = zones[0].y.ToString();
+						}
+
 						for (int i = 0; i < zones[zone_index].ParallaxingBackgrounds.Count(); i++)
 						{
 							LoadParallaxingBackground(zones[zone_index].ParallaxingBackgrounds[i], zones[zone_index]);
@@ -1709,6 +1727,7 @@ namespace LevelEditor
 			activityLabel.Visibility = Visibility.Visible;
 
 			IsInteractableCheckBox.Visibility = Visibility.Visible;
+			IsDestructibleCheckBox.Visibility = Visibility.Visible;
 		}
 
 		void HideUnitUiItems()
@@ -1727,6 +1746,7 @@ namespace LevelEditor
 			activityLabel.Visibility = Visibility.Hidden;
 
 			IsInteractableCheckBox.Visibility = Visibility.Hidden;
+			IsDestructibleCheckBox.Visibility = Visibility.Hidden;
 		}
 
 		void ShowTriangleUiItems()
@@ -2394,6 +2414,7 @@ namespace LevelEditor
 		public float width = 0.0f;
 		public float height = 0.0f;
 		public bool IsInteractable = false;
+		public bool IsDestructible = false;
 		public string activity = "";
 
 		public SerializedUnit()
@@ -2477,7 +2498,7 @@ namespace LevelEditor
 				_y = value;
 				if (image != null)
 				{
-					Canvas.SetLeft(image, _y);
+					Canvas.SetTop(image, _y);
 				}
 			}
 		}
