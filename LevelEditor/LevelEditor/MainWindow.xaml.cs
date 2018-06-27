@@ -33,21 +33,22 @@ namespace LevelEditor
 		const int OBJECT_SELECTION_TRIANGLE = 1;
 		const int OBJECT_SELECTION_DOOR = 2;
 		const int OBJECT_SELECTION_TRIGGER = 3;
-		const int OBJECT_SELECTION_UNIT_STARTING_INDEX = 4;
+		const int OBJECT_SELECTION_RAIL = 4;
+		const int OBJECT_SELECTION_UNIT_STARTING_INDEX = 5;
 
 		Point mouse_pressed_pos = new Point();
 
 		System.Windows.Threading.DispatcherTimer updateTimer = new System.Windows.Threading.DispatcherTimer();
 
+		Rectangle rect_getting_drawn = null;
 		Polygon triangle_getting_drawn = null;
+		Line line_getting_drawn = null;
 
 		//Polygon triangle_getting_made = null;
 		Dictionary<string, Polygon> triangles = new Dictionary<string, Polygon>();
 		List<SerializedTriangle> sTris = new List<SerializedTriangle>();
 		Polygon selected_triangle = null;
 		string selected_triangle_name = "";
-
-		Rectangle rect_getting_drawn = null;
 
 		Rectangle selected_rectangle = null;
 		Dictionary<string, Rectangle> rectangles = new Dictionary<string, Rectangle>();
@@ -76,6 +77,11 @@ namespace LevelEditor
 		Dictionary<string, Rectangle> trigger_rects = new Dictionary<string, Rectangle>();
 		List<SerializedTrigger> sTriggers = new List<SerializedTrigger>();
 		string selected_trigger_name = "";
+
+		Line selected_rail = null;
+		Dictionary<string, Line> rail_lines = new Dictionary<string, Line>();
+		List<SerializedRail> sRails = new List<SerializedRail>();
+		string selected_rail_name = "";
 
 		ArtImage selected_image = null;
 		List<BitmapImage> bitmap = new List<BitmapImage>();
@@ -254,8 +260,32 @@ namespace LevelEditor
 						selected_triangle.Points[1] = new Point(selected_triangle.Points[0].X, selected_triangle.Points[2].Y);
 					}
 
+					sTri.points = selected_triangle.Points;
+
 					Canvas.SetLeft(selected_triangle, 0.0f);
 					Canvas.SetTop(selected_triangle, 0.0f);
+				}
+				
+				SerializedRail sRail = GetSerializedRail(selected_rail_name);
+				if (sRail != null)
+				{
+					float newP1X = 0.0f;
+					float newP1Y = 0.0f;
+					float newP2X = 0.0f;
+					float newP2Y = 0.0f;
+
+					float.TryParse(p1xTextBox.Text, out newP1X);
+					float.TryParse(p1yTextBox.Text, out newP1Y);
+					float.TryParse(p2xTextBox.Text, out newP2X);
+					float.TryParse(p2yTextBox.Text, out newP2Y);
+
+					selected_rail.X1 = sRail.x = newP1X;
+					selected_rail.Y1 = sRail.y = newP1Y;
+					selected_rail.X2 = sRail.x_prime = newP2X;
+					selected_rail.Y2 = sRail.y_prime = newP2Y;
+
+					Canvas.SetLeft(selected_rail, 0.0f);
+					Canvas.SetTop(selected_rail, 0.0f);
 				}
 			}
 			else if (xZoneTextBox.IsFocused || yZoneTextBox.IsFocused)
@@ -304,15 +334,6 @@ namespace LevelEditor
 			}
 			else if (ListOfObjectTypes.SelectedIndex == OBJECT_SELECTION_TRIANGLE)
 			{
-				//triangle_getting_made = new Polygon();
-				//triangle_getting_made.StrokeThickness = 0;
-				//triangle_getting_made.HorizontalAlignment = HorizontalAlignment.Center;
-				//triangle_getting_made.VerticalAlignment = VerticalAlignment.Center;
-				//
-				//triangle_getting_made.Points = new PointCollection() { mouse_pressed_pos, mouse_pressed_pos, mouse_pressed_pos };
-
-				//Point mouse_pressed_pos_adjusted = new Point(mouse_pressed_pos.X / 2.0f, mouse_pressed_pos.Y / 2.0f);
-
 				triangle_getting_drawn = new Polygon();
 				triangle_getting_drawn.Stroke = TransformingColor;
 				triangle_getting_drawn.StrokeThickness = 1;
@@ -320,13 +341,25 @@ namespace LevelEditor
 				triangle_getting_drawn.VerticalAlignment = VerticalAlignment.Center;
 
 				triangle_getting_drawn.Points = new PointCollection() { mouse_pressed_pos, mouse_pressed_pos, mouse_pressed_pos };
-				//triangle_getting_drawn.Points = new PointCollection() { mouse_pressed_pos_adjusted, mouse_pressed_pos_adjusted, mouse_pressed_pos_adjusted };
 
 				Canvas.SetLeft(triangle_getting_drawn, mouse_pressed_pos.X);
 				Canvas.SetTop(triangle_getting_drawn, mouse_pressed_pos.Y);
-				//Canvas.SetLeft(triangle_getting_drawn, mouse_pressed_pos_adjusted.X);
-				//Canvas.SetTop(triangle_getting_drawn, mouse_pressed_pos_adjusted.Y);
 				MyCanvas.Children.Add(triangle_getting_drawn);
+			}
+			else if (ListOfObjectTypes.SelectedIndex == OBJECT_SELECTION_RAIL)
+			{
+				line_getting_drawn = new Line();
+				line_getting_drawn.Stroke = TransformingColor;
+				line_getting_drawn.StrokeThickness = 1;
+				line_getting_drawn.HorizontalAlignment = HorizontalAlignment.Center;
+				line_getting_drawn.VerticalAlignment = VerticalAlignment.Center;
+
+				line_getting_drawn.X1 = mouse_pressed_pos.X;
+				line_getting_drawn.Y1 = mouse_pressed_pos.Y;
+
+				Canvas.SetLeft(line_getting_drawn, mouse_pressed_pos.X);
+				Canvas.SetTop(line_getting_drawn, mouse_pressed_pos.Y);
+				MyCanvas.Children.Add(line_getting_drawn);
 			}
 		}
 
@@ -358,17 +391,6 @@ namespace LevelEditor
 
 				var pos = e.GetPosition(MyCanvas);
 
-				//triangle_getting_made.Points[0] = new Point(mouse_pressed_pos.X, mouse_pressed_pos.Y);
-				//triangle_getting_made.Points[2] = pos;
-				//
-				//if (pos.Y < triangle_getting_made.Points[0].Y) {
-				//	triangle_getting_made.Points[1] = new Point(triangle_getting_made.Points[2].X, triangle_getting_made.Points[0].Y);
-				//} else {
-				//	triangle_getting_made.Points[1] = new Point(triangle_getting_made.Points[0].X, triangle_getting_made.Points[2].Y);
-				//}
-
-				//pos = e.GetPosition(triangle_getting_drawn);
-				//Point mouse_pressed_pos_adjusted = new Point(mouse_pressed_pos.X / 2.0f, mouse_pressed_pos.Y / 2.0f);
 				Point mouse_pressed_pos_adjusted = new Point(mouse_pressed_pos.X / 1.0f, mouse_pressed_pos.Y / 1.0f);
 
 				triangle_getting_drawn.Points[0] = new Point(mouse_pressed_pos_adjusted.X, mouse_pressed_pos_adjusted.Y);
@@ -382,6 +404,23 @@ namespace LevelEditor
 
 				Canvas.SetLeft(triangle_getting_drawn, 0.0f);
 				Canvas.SetTop(triangle_getting_drawn, 0.0f);
+			}
+			else if (line_getting_drawn != null)
+			{
+				if (e.LeftButton == MouseButtonState.Released)
+					return;
+
+				var pos = e.GetPosition(MyCanvas);
+
+				Point mouse_pressed_pos_adjusted = new Point(mouse_pressed_pos.X / 1.0f, mouse_pressed_pos.Y / 1.0f);
+
+				line_getting_drawn.X1 = mouse_pressed_pos.X;
+				line_getting_drawn.Y1 = mouse_pressed_pos.Y;
+				line_getting_drawn.X2 = pos.X;
+				line_getting_drawn.Y2 = pos.Y;
+
+				Canvas.SetLeft(line_getting_drawn, 0.0f);
+				Canvas.SetTop(line_getting_drawn, 0.0f);
 			}
 		}
 
@@ -503,14 +542,46 @@ namespace LevelEditor
 					sTris.Add(sTri);
 
 					Select(name);
-
-					//MyCanvas.Children.Remove(triangle_getting_drawn);
-					//
-					//triangle_getting_made.StrokeThickness = 1;
-					//MyCanvas.Children.Add(triangle_getting_made);
-
+					
 					triangle_getting_drawn = null;
-					//triangle_getting_made = null;
+				}
+			}
+			else if (line_getting_drawn != null)
+			{
+				isDataDirty = true;
+
+				if (ListOfObjectTypes.SelectedIndex == OBJECT_SELECTION_RAIL)
+				{
+					int item_index = 0;
+					string name = "Rail " + ListOfObjects.Items.Count;
+
+					while (GetSerializedRail(name) != null)
+					{
+						item_index++;
+						name = "Rail " + item_index;
+					}
+
+					ListBoxItem item = new ListBoxItem();
+					item.Content = name;
+					item.Selected += OnSelected;
+					item.Unselected += OnUnselected;
+					ListOfObjects.Items.Add(item);
+
+					rail_lines.Add(name, line_getting_drawn);
+
+					SerializedRail sRail = new SerializedRail();
+					sRail.type = "Rail";
+					sRail.name = name;
+					sRail.x = (float)line_getting_drawn.X1;
+					sRail.y = (float)line_getting_drawn.Y1;
+					sRail.x_prime = (float)line_getting_drawn.X2;
+					sRail.y_prime = (float)line_getting_drawn.Y2;
+
+					sRails.Add(sRail);
+
+					Select(name);
+
+					line_getting_drawn = null;
 				}
 			}
 
@@ -722,6 +793,7 @@ namespace LevelEditor
 				HideUnitUiItems();
 				HideDoorUiItems();
 				HideTriggerUiItems();
+				HideRailUiItems();
 				ShowRectangleUiItems();
 			}
 			else if (name.Contains("Triangle"))
@@ -747,7 +819,31 @@ namespace LevelEditor
 				HideDoorUiItems();
 				HideUnitUiItems();
 				HideTriggerUiItems();
+				HideRailUiItems();
 				ShowTriangleUiItems();
+			}
+			else if (name.Contains("Rail"))
+			{
+				DeleteButton.IsEnabled = true;
+
+				selected_rail_name = name;
+
+				selected_rail = rail_lines[name];
+				selected_rail.Stroke = SelectedColor;
+
+				SerializedRail sRail = GetSerializedRail(name);
+
+				p1xTextBox.Text = sRail.x.ToString();
+				p1yTextBox.Text = sRail.y.ToString();
+				p2xTextBox.Text = sRail.x_prime.ToString();
+				p2yTextBox.Text = sRail.y_prime.ToString();
+
+				HideRectangleUiItems();
+				HideDoorUiItems();
+				HideUnitUiItems();
+				HideTriggerUiItems();
+				HideTriangleUiItems();
+				ShowRailUiItems();
 			}
 			else if (name.Contains("Player"))
 			{
@@ -769,6 +865,7 @@ namespace LevelEditor
 				HideDoorUiItems();
 				HideUnitUiItems();
 				HideTriggerUiItems();
+				HideRailUiItems();
 				ShowRectangleUiItems();
 			}
 			else if (name.Contains("Door"))
@@ -796,6 +893,7 @@ namespace LevelEditor
 				HideRectangleUiItems();
 				HideUnitUiItems();
 				HideTriggerUiItems();
+				HideRailUiItems();
 				ShowDoorUiItems();
 			}
 			else if (name.Contains("Trigger"))
@@ -823,6 +921,7 @@ namespace LevelEditor
 				HideUnitUiItems();
 				HideDoorUiItems();
 				HideRectangleUiItems();
+				HideRailUiItems();
 				ShowTriggerUiItems();
 			}
 			else if (name.Contains("Image"))
@@ -844,6 +943,7 @@ namespace LevelEditor
 				HideUnitUiItems();
 				HideDoorUiItems();
 				HideTriggerUiItems();
+				HideRailUiItems();
 				ShowRectangleUiItems();
 			}
 			else if (name.Contains("Layer"))
@@ -861,6 +961,7 @@ namespace LevelEditor
 					HideUnitUiItems();
 					HideDoorUiItems();
 					HideTriggerUiItems();
+					HideRailUiItems();
 					ShowRectangleUiItems();
 				}
 			}
@@ -895,6 +996,7 @@ namespace LevelEditor
 				HideDoorUiItems();
 				HideRectangleUiItems();
 				HideTriggerUiItems();
+				HideRailUiItems();
 				ShowUnitUiItems();
 			}
 		}
@@ -935,6 +1037,11 @@ namespace LevelEditor
 			{
 				HideRectangleUiItems();
 			}
+			else if (selected_rail != null)
+			{
+				selected_rail.Stroke = DormantColor;
+				HideRailUiItems();
+			}
 
 			DeleteButton.IsEnabled = false;
 
@@ -945,6 +1052,9 @@ namespace LevelEditor
 
 			selected_triangle_name = "";
 			selected_triangle = null;
+
+			selected_rail_name = "";
+			selected_rail = null;
 
 			selected_door_name = "";
 			selected_door = null;
@@ -972,152 +1082,6 @@ namespace LevelEditor
 
 			activityTextBox.Text = "";
 			doorActivatorTextBox.Text = "";
-		}
-
-		private void Apply(object sender, RoutedEventArgs e)
-		{
-			if (playerRectSelected)
-			{
-				float.TryParse(xTextBox.Text, out sPlayer.x);
-				float.TryParse(yTextBox.Text, out sPlayer.y);
-
-				playerRectangle.Width = sPlayer.width;
-				playerRectangle.Height = sPlayer.height;
-
-				MyCanvas.Children.Remove(playerRectangle);
-
-				Canvas.SetLeft(playerRectangle, sPlayer.x);
-				Canvas.SetTop(playerRectangle, sPlayer.y);
-
-				MyCanvas.Children.Add(playerRectangle);
-			}
-
-			SerializedRectangle sRect = GetSerializedRect(selected_rect_name);
-			if (sRect != null)
-			{
-				float.TryParse(xTextBox.Text, out sRect.x);
-				float.TryParse(yTextBox.Text, out sRect.y);
-				float.TryParse(wTextBox.Text, out sRect.width);
-				float.TryParse(hTextBox.Text, out sRect.height);
-				float.TryParse(velocityXTextBox.Text, out sRect.vel_x);
-				float.TryParse(velocityYTextBox.Text, out sRect.vel_y);
-
-				sRect.pass_through = PassThroughCheckBox.IsChecked.HasValue ? PassThroughCheckBox.IsChecked.Value : false;
-
-				selected_rectangle.Width = sRect.width;
-				selected_rectangle.Height = sRect.height;
-
-				MyCanvas.Children.Remove(selected_rectangle);
-
-				Canvas.SetLeft(selected_rectangle, sRect.x);
-				Canvas.SetTop(selected_rectangle, sRect.y);
-
-				MyCanvas.Children.Add(selected_rectangle);
-			}
-
-			SerializedTriangle sTri = GetSerializedTriangle(selected_triangle_name);
-			if (sTri != null)
-			{
-				float newP1X = 0.0f;
-				float newP1Y = 0.0f;
-				float newP2X = 0.0f;
-				float newP2Y = 0.0f;
-
-				float.TryParse(p1xTextBox.Text, out newP1X);
-				float.TryParse(p1yTextBox.Text, out newP1Y);
-				float.TryParse(p2xTextBox.Text, out newP2X);
-				float.TryParse(p2yTextBox.Text, out newP2Y);
-
-				sTri.right_angle_above_line = TriangleCheckBox.IsChecked.HasValue ? TriangleCheckBox.IsChecked.Value : false;
-
-				selected_triangle.Points[0] = new Point(newP1X, newP1Y);
-				selected_triangle.Points[2] = new Point(newP2X, newP2Y);
-
-				if (sTri.right_angle_above_line)
-				{
-					selected_triangle.Points[1] = new Point(selected_triangle.Points[2].X, selected_triangle.Points[0].Y);
-				}
-				else 
-				{
-					selected_triangle.Points[1] = new Point(selected_triangle.Points[0].X, selected_triangle.Points[2].Y);
-				}
-
-				MyCanvas.Children.Remove(selected_triangle);
-
-				Canvas.SetLeft(selected_triangle, 0.0f);
-				Canvas.SetTop(selected_triangle, 0.0f);
-
-				MyCanvas.Children.Add(selected_triangle);
-			}
-
-			SerializedDoor sDoor = GetSerializedDoor(selected_door_name);
-			if (sDoor != null)
-			{
-				float.TryParse(xTextBox.Text, out sDoor.x);
-				float.TryParse(yTextBox.Text, out sDoor.y);
-				sDoor.activator = doorActivatorTextBox.Text;
-
-				MyCanvas.Children.Remove(selected_door);
-
-				Canvas.SetLeft(selected_door, sDoor.x);
-				Canvas.SetTop(selected_door, sDoor.y);
-
-				MyCanvas.Children.Add(selected_door);
-			}
-
-			SerializedUnit sUnit = GetSerializedUnit(selected_unit_name);
-			if (sUnit != null)
-			{
-				float.TryParse(xTextBox.Text, out sUnit.LevelLocationX);
-				float.TryParse(yTextBox.Text, out sUnit.LevelLocationY);
-				sUnit.activity = activityTextBox.Text;
-
-				sUnit.IsInteractable = IsInteractableCheckBox.IsChecked.HasValue ? IsInteractableCheckBox.IsChecked.Value : false;
-				sUnit.IsDestructible = IsDestructibleCheckBox.IsChecked.HasValue ? IsDestructibleCheckBox.IsChecked.Value : false;
-
-				MyCanvas.Children.Remove(selected_unit_rectangle);
-
-				Canvas.SetLeft(selected_unit_rectangle, sUnit.LevelLocationX);
-				Canvas.SetTop(selected_unit_rectangle, sUnit.LevelLocationY);
-
-				MyCanvas.Children.Add(selected_unit_rectangle);
-			}
-
-			SerializedTrigger sTrigger = GetSerializedTrigger(selected_trigger_name);
-			if (sTrigger != null)
-			{
-				float.TryParse(xTextBox.Text, out sTrigger.x);
-				float.TryParse(yTextBox.Text, out sTrigger.y);
-				float.TryParse(wTextBox.Text, out sTrigger.width);
-				float.TryParse(hTextBox.Text, out sTrigger.height);
-				sTrigger.activity = activityTextBox.Text;
-
-				selected_trigger.Width = sTrigger.width;
-				selected_trigger.Height = sTrigger.height;
-
-				MyCanvas.Children.Remove(selected_trigger);
-
-				Canvas.SetLeft(selected_trigger, sTrigger.x);
-				Canvas.SetTop(selected_trigger, sTrigger.y);
-
-				MyCanvas.Children.Add(selected_trigger);
-			}
-
-			ArtImage image = GetArtImage(selected_image_name);
-			if (image != null)
-			{
-				float.TryParse(xTextBox.Text, out image.x);
-				float.TryParse(yTextBox.Text, out image.y);
-				wTextBox.Text = "";
-				hTextBox.Text = "";
-
-				MyCanvas.Children.Remove(image.image);
-
-				Canvas.SetLeft(image.image, image.x);
-				Canvas.SetTop(image.image, image.y);
-
-				MyCanvas.Children.Add(image.image);
-			}
 		}
 
 		private void Delete(object sender, RoutedEventArgs e)
@@ -1155,6 +1119,26 @@ namespace LevelEditor
 					ListBoxItem item = (ListBoxItem)ListOfObjects.Items[i];
 
 					if (item.Content.ToString() == selected_triangle_name)
+					{
+						ListOfObjects.Items.Remove(ListOfObjects.Items[i]);
+						break;
+					}
+				}
+			}
+
+			SerializedRail sRail = GetSerializedRail(selected_rail_name);
+			if (sRail != null)
+			{
+				isDataDirty = true;
+				rail_lines.Remove(selected_rail_name);
+				sRails.Remove(sRail);
+				MyCanvas.Children.Remove(selected_rail);
+
+				for (int i = 0; i < ListOfObjects.Items.Count; i++)
+				{
+					ListBoxItem item = (ListBoxItem)ListOfObjects.Items[i];
+
+					if (item.Content.ToString() == selected_rail_name)
 					{
 						ListOfObjects.Items.Remove(ListOfObjects.Items[i]);
 						break;
@@ -1272,6 +1256,7 @@ namespace LevelEditor
 			sObjects.player = sPlayer;
 			sObjects.rectangles = sRects;
 			sObjects.triangles = sTris;
+			sObjects.rails = sRails;
 			sObjects.doors = sDoors;
 			sObjects.triggers = sTriggers;
 			sObjects.bestiaryFilePaths = ImportedBestiariesFilePaths;
@@ -1331,6 +1316,7 @@ namespace LevelEditor
 				sPlayer = sObjects.player;
 				sRects = sObjects.rectangles;
 				sTris = sObjects.triangles;
+				sRails = sObjects.rails ?? new List<SerializedRail>();
 				sDoors = sObjects.doors;
 				sTriggers = sObjects.triggers;
 				ImportedBestiariesFilePaths = sObjects.bestiaryFilePaths;
@@ -1341,6 +1327,7 @@ namespace LevelEditor
 
 				rectangles.Clear();
 				triangles.Clear();
+				rail_lines.Clear();
 				door_rects.Clear();
 				unit_rects.Clear();
 				trigger_rects.Clear();
@@ -1362,6 +1349,10 @@ namespace LevelEditor
 				ListBoxItem triggerItem = new ListBoxItem();
 				triggerItem.Content = "Trigger";
 				ListOfObjectTypes.Items.Add(triggerItem);
+
+				ListBoxItem railItem = new ListBoxItem();
+				railItem.Content = "Rail";
+				ListOfObjectTypes.Items.Add(railItem);
 
 				ListOfObjects.Items.Clear();
 				MyCanvas.Children.Clear();
@@ -1425,6 +1416,32 @@ namespace LevelEditor
 
 					item = new ListBoxItem();
 					item.Content = sTris[i].name;
+					item.Selected += OnSelected;
+					item.Unselected += OnUnselected;
+					ListOfObjects.Items.Add(item);
+				}
+				
+				for (int i = 0; i < sRails.Count(); i++)
+				{
+					Line rail = new Line();
+					rail.Stroke = DormantColor;
+					rail.StrokeThickness = 1;
+					rail.HorizontalAlignment = HorizontalAlignment.Left;
+					rail.VerticalAlignment = VerticalAlignment.Top;
+
+					rail.X1 = sRails[i].x;
+					rail.Y1 = sRails[i].y;
+					rail.X2 = sRails[i].x_prime;
+					rail.Y2 = sRails[i].y_prime;
+
+					Canvas.SetLeft(rail, 0.0f);
+					Canvas.SetTop(rail, 0.0f);
+					MyCanvas.Children.Add(rail);
+
+					rail_lines.Add(sRails[i].name, rail);
+
+					item = new ListBoxItem();
+					item.Content = sRails[i].name;
 					item.Selected += OnSelected;
 					item.Unselected += OnUnselected;
 					ListOfObjects.Items.Add(item);
@@ -1609,6 +1626,19 @@ namespace LevelEditor
 			return null;
 		}
 
+		private SerializedRail GetSerializedRail(string name)
+		{
+			for (int i = 0; i < sRails.Count; i++)
+			{
+				if (name == sRails[i].name)
+				{
+					return sRails[i];
+				}
+			}
+
+			return null;
+		}
+
 		private SerializedUnit GetSerializedUnit(string name)
 		{
 			for (int i = 0; i < sUnits.Count; i++)
@@ -1779,6 +1809,32 @@ namespace LevelEditor
 			TriangleCheckBox.Visibility = Visibility.Hidden;
 		}
 
+		void ShowRailUiItems()
+		{
+			p1xTextBox.Visibility = Visibility.Visible;
+			p1yTextBox.Visibility = Visibility.Visible;
+			p2xTextBox.Visibility = Visibility.Visible;
+			p2yTextBox.Visibility = Visibility.Visible;
+
+			p1xLabel.Visibility = Visibility.Visible;
+			p1yLabel.Visibility = Visibility.Visible;
+			p2xLabel.Visibility = Visibility.Visible;
+			p2yLabel.Visibility = Visibility.Visible;
+		}
+
+		void HideRailUiItems()
+		{
+			p1xTextBox.Visibility = Visibility.Hidden;
+			p1yTextBox.Visibility = Visibility.Hidden;
+			p2xTextBox.Visibility = Visibility.Hidden;
+			p2yTextBox.Visibility = Visibility.Hidden;
+
+			p1xLabel.Visibility = Visibility.Hidden;
+			p1yLabel.Visibility = Visibility.Hidden;
+			p2xLabel.Visibility = Visibility.Hidden;
+			p2yLabel.Visibility = Visibility.Hidden;
+		}
+
 		void ShowDoorUiItems()
 		{
 			xTextBox.Visibility = Visibility.Visible;
@@ -1917,7 +1973,7 @@ namespace LevelEditor
 
 		public void CreateArtImage(string file_path_and_name, bool tie_to_selected_object)
 		{
-			if (tie_to_selected_object && (playerRectSelected || selected_triangle_name != "" || selected_unit_name != "" || selected_trigger_name != ""))
+			if (tie_to_selected_object && (playerRectSelected || selected_triangle_name != "" || selected_rail_name != "" || selected_unit_name != "" || selected_trigger_name != ""))
 			{
 				return;
 			}
@@ -2203,8 +2259,10 @@ namespace LevelEditor
 		private void Reset()
 		{
 			mouse_pressed_pos = new Point();
-
+			
+			rect_getting_drawn = null;
 			triangle_getting_drawn = null;
+			line_getting_drawn = null;
 
 			//Polygon triangle_getting_made = null;
 			triangles = new Dictionary<string, Polygon>();
@@ -2212,7 +2270,10 @@ namespace LevelEditor
 			selected_triangle = null;
 			selected_triangle_name = "";
 
-			rect_getting_drawn = null;
+			rail_lines = new Dictionary<string, Line>();
+			sRails = new List<SerializedRail>();
+			selected_rail = null;
+			selected_rail_name = "";
 
 			selected_rectangle = null;
 			rectangles = new Dictionary<string, Rectangle>();
@@ -2379,6 +2440,16 @@ namespace LevelEditor
 		}
 	}
 
+	public class SerializedRail : SerializedRectangle
+	{
+		public float x_prime;
+		public float y_prime;
+
+		public SerializedRail()
+		{
+		}
+	}
+
 	public class SerializedPlayer : SerializedRectangle
 	{
 		public SerializedPlayer()
@@ -2391,6 +2462,7 @@ namespace LevelEditor
 		public SerializedPlayer player;
 		public List<SerializedRectangle> rectangles;
 		public List<SerializedTriangle> triangles;
+		public List<SerializedRail> rails;
 		public List<SerializedDoor> doors;
 		public List<SerializedTrigger> triggers;
 		public List<string> bestiaryFilePaths;

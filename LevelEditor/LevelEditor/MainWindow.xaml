@@ -41,6 +41,7 @@
 				<ListBoxItem Name="Triangle">Triangle</ListBoxItem>
 				<ListBoxItem Name="Door">Door</ListBoxItem>
 				<ListBoxItem Name="Trigger">Trigger</ListBoxItem>
+				<ListBoxItem Name="Rail">Rail</ListBoxItem>
 			</ListBox>
 
 			<Label Background="White" FontWeight="Bold" HorizontalContentAlignment="Center" Canvas.Right="1" Width="200" Canvas.Top="222">Objects</Label>
